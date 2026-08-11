@@ -1009,6 +1009,17 @@ for (let i = 0; i < 4; i++) buildVoice(i);
   };
   host.addEventListener('pointerup', lift);
   host.addEventListener('pointercancel', lift);
+
+  /* iOS Safari runs its own pinch and double-tap zoom on top of touch-action,
+     and a two-handed drum roll reads to it as a gesture. These events are the
+     only way to refuse it. Scoped to the pad grid on purpose — the rest of the
+     page can still be zoomed, which matters for reading the help text. */
+  ['gesturestart', 'gesturechange', 'gestureend'].forEach(t =>
+    host.addEventListener(t, e => e.preventDefault()));
+  host.addEventListener('touchstart', e => {
+    if (e.touches.length > 1) e.preventDefault();
+  }, { passive:false });
+  host.addEventListener('touchmove', e => e.preventDefault(), { passive:false });
 })();
 
 function setPadLights(act){
