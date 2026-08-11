@@ -1,0 +1,1348 @@
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ADrum — engine prototype</title>
+<style>
+:root{
+  --paper:#E4E8E3;
+  --paper-2:#EFF2EE;
+  --grid:#D2D8D2;
+  --ink:#17262A;
+  --ink-2:#5D6F71;
+  --ink-3:#93A19F;
+  --rule:#B7C0B9;
+  --screen:#0A1315;
+  --trace:#3FCF8E;
+  --live:#2547D0;
+  --live-soft:#DDE3F8;
+  --mod:#B0246A;
+  --mod-soft:#F6DEE9;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html,body{height:100%;}
+body{
+  background-color:var(--paper);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size:24px 24px;
+  background-position:-1px -1px;
+  color:var(--ink);
+  font:400 12px/1.45 var(--mono);
+  -webkit-font-smoothing:antialiased;
+  padding:14px;
+  overscroll-behavior:none;
+}
+.wrap{max-width:1240px; margin:0 auto;}
+
+.masthead{
+  display:flex; align-items:flex-end; gap:16px; flex-wrap:wrap;
+  border-bottom:2px solid var(--ink); padding-bottom:10px; margin-bottom:14px;
+}
+.wordmark{font-size:21px; font-weight:600; letter-spacing:.2em; text-transform:uppercase; line-height:1;}
+.wordmark span{color:var(--mod);}
+.tagline{font-family:var(--sans); font-size:11.5px; color:var(--ink-2); padding-bottom:2px;}
+.masthead-tools{margin-left:auto; display:flex; gap:6px; align-items:center; flex-wrap:wrap;}
+
+.btn{
+  font:inherit; font-size:10px; letter-spacing:.1em; text-transform:uppercase;
+  background:var(--paper-2); color:var(--ink); border:1px solid var(--rule);
+  padding:6px 10px; cursor:pointer; border-radius:1px;
+}
+.btn:hover{border-color:var(--ink-2);}
+.btn:focus-visible{outline:2px solid var(--live); outline-offset:1px;}
+.btn.on{background:var(--live); border-color:var(--live); color:#fff;}
+
+.seg{display:flex; border:1px solid var(--rule); border-radius:1px; overflow:hidden;}
+.seg button{
+  flex:1; font:inherit; font-size:9.5px; letter-spacing:.08em; text-transform:uppercase;
+  background:var(--paper-2); color:var(--ink-2); border:0; border-right:1px solid var(--rule);
+  padding:5px 2px; cursor:pointer; white-space:nowrap;
+}
+.seg button:last-child{border-right:0;}
+.seg button.on{background:var(--live); color:#fff;}
+.seg button.on-mod{background:var(--mod); color:#fff;}
+.seg button:focus-visible{outline:2px solid var(--live); outline-offset:-2px;}
+
+/* ---------- pads ---------- */
+.padbed{background:var(--paper-2); border:1px solid var(--rule); border-left:3px solid var(--ink); padding:0 12px 12px; margin-bottom:14px;}
+.panel-head{
+  display:flex; align-items:baseline; gap:8px;
+  padding:8px 0 9px; margin-bottom:10px; border-bottom:1px solid var(--rule);
+}
+.panel-name{font-size:11px; font-weight:600; letter-spacing:.18em; text-transform:uppercase;}
+.panel-what{font-size:9px; letter-spacing:.04em; color:var(--ink-3); text-transform:uppercase; margin-left:auto;}
+.pads{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; touch-action:none;}
+.pad{
+  touch-action:none; -webkit-touch-callout:none; user-select:none; -webkit-user-select:none;
+  aspect-ratio:1.5/1; background:var(--paper); border:1px solid var(--ink); border-radius:2px;
+  cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+  font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3);
+}
+.pad b{font-size:22px; font-weight:600; letter-spacing:.04em; color:var(--ink);}
+.pad.hit{background:var(--live); border-color:var(--live);}
+.pad.hit b, .pad.hit{color:#fff;}
+.padbar{display:flex; gap:8px; align-items:center; flex-wrap:wrap; padding-top:9px;}
+.tiny{font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-2);}
+
+/* ---------- voice rack ---------- */
+.rack{display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:14px; align-items:start;}
+.voice{background:var(--paper-2); border:1px solid var(--rule); border-left:3px solid var(--live); padding:0 12px 12px;}
+.voice.mod{border-left-color:var(--mod);}
+.row{display:flex; gap:8px; align-items:center; margin-bottom:8px;}
+.row-label{font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-2); min-width:52px;}
+.arch-note{
+  font-family:var(--sans); font-size:11px; line-height:1.45; color:var(--ink-2);
+  background:#fff; border-left:2px solid var(--live); padding:7px 9px; margin-bottom:10px;
+}
+
+.ctl{margin-bottom:7px; position:relative; border-radius:2px;}
+.ctl-head{display:flex; align-items:baseline; gap:6px; font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-2);}
+.ctl-head .v{margin-left:auto; font-size:9.5px; color:var(--ink); letter-spacing:0; font-variant-numeric:tabular-nums;}
+.ctl-head .cc{font-size:8px; letter-spacing:0; color:var(--mod);}
+.ctl-head .cc.waiting{color:var(--ink-3);}
+
+/* ---------- MIDI learn ---------- */
+.learnbar{
+  display:none; align-items:center; gap:10px; flex-wrap:wrap;
+  border:1px solid var(--mod); background:var(--mod-soft);
+  padding:7px 10px; margin-bottom:14px;
+  font-size:10px; letter-spacing:.06em; color:var(--ink);
+}
+body.learning .learnbar{display:flex;}
+.learnbar .grow{flex:1; min-width:140px;}
+/* while learning, a click assigns rather than drags, so the slider itself
+   stops taking pointer events and the row around it takes them instead */
+body.learning .ctl{cursor:pointer; outline:1px dashed var(--rule); outline-offset:2px;}
+body.learning .ctl:hover{outline-color:var(--mod);}
+body.learning .ctl input[type=range]{pointer-events:none;}
+.ctl.armed{outline:2px solid var(--mod) !important; background:var(--mod-soft);}
+/* where the hardware control is currently sitting, shown only while a mapped
+   control is waiting to be picked up */
+.hwmark{
+  position:absolute; bottom:5px; width:2px; height:11px; background:var(--mod);
+  opacity:.65; pointer-events:none; display:none; margin-left:-1px;
+}
+input[type=range]{
+  -webkit-appearance:none; appearance:none; width:100%; height:16px; background:transparent; cursor:pointer; margin:0;
+}
+input[type=range]::-webkit-slider-runnable-track{height:3px; background:var(--rule); border-radius:2px;}
+input[type=range]::-moz-range-track{height:3px; background:var(--rule); border-radius:2px;}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none; appearance:none; width:11px; height:11px; margin-top:-4px;
+  background:var(--live); border-radius:50%; border:1px solid var(--paper-2);
+}
+input[type=range]::-moz-range-thumb{width:11px; height:11px; background:var(--live); border-radius:50%; border:1px solid var(--paper-2);}
+.voice.mod input[type=range]::-webkit-slider-thumb{background:var(--mod);}
+.voice.mod input[type=range]::-moz-range-thumb{background:var(--mod);}
+input[type=range]:focus-visible{outline:2px solid var(--live); outline-offset:2px;}
+
+.sub{
+  font-size:8.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-3);
+  border-top:1px solid var(--rule); padding-top:8px; margin:12px 0 6px;
+}
+.voice .sub:first-of-type{border-top:0; padding-top:0; margin-top:2px;}
+.segrow{margin-bottom:8px;}
+.ctl.off{opacity:.35; pointer-events:none;}
+
+/* ---------- scope ---------- */
+.scr{background:var(--screen); border:1px solid var(--ink); position:relative;}
+.scr canvas{display:block; width:100%; height:auto;}
+.scr-tag{position:absolute; top:5px; left:7px; font-size:8.5px; letter-spacing:.14em; text-transform:uppercase; color:#1C6B4E; pointer-events:none;}
+
+#curtain{position:fixed; inset:0; background:rgba(228,232,227,.96); z-index:50; display:flex; align-items:center; justify-content:center; padding:20px;}
+#curtain .card{max-width:430px; border:2px solid var(--ink); background:var(--paper-2); padding:22px;}
+#curtain h1{font-size:19px; letter-spacing:.2em; text-transform:uppercase; margin-bottom:10px;}
+#curtain p{font-family:var(--sans); font-size:13px; line-height:1.55; color:var(--ink-2); margin-bottom:14px;}
+#startBtn{font-size:12px; padding:11px 22px; background:var(--mod); color:#fff; border-color:var(--mod);}
+
+/* ---------- help ---------- */
+.help{display:none;}
+body.helpon .help{display:block;}
+.helpbar{
+  display:none; align-items:center; gap:8px; flex-wrap:wrap;
+  border:1px solid var(--rule); background:var(--paper-2);
+  padding:7px 10px; margin-bottom:14px;
+}
+body.helpon .helpbar{display:flex;}
+.helpbar .lbl{font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-2);}
+.helpbar .langseg{flex:1 1 auto;}
+.langseg{display:flex; flex-wrap:wrap; border:1px solid var(--rule); border-radius:1px; overflow:hidden;}
+.langseg button{
+  flex:1 1 auto; font:inherit; font-size:10px; letter-spacing:.04em;
+  background:var(--paper); color:var(--ink-2); border:0; border-right:1px solid var(--rule);
+  padding:5px 9px; cursor:pointer; white-space:nowrap; text-align:center;
+}
+.langseg button:last-child{border-right:0;}
+.langseg button.on{background:var(--live); color:#fff;}
+.langseg button:focus-visible{outline:2px solid var(--live); outline-offset:-2px;}
+.help-note{
+  font-family:var(--sans); font-size:11.5px; line-height:1.5; color:var(--ink);
+  background:#fff; border-left:2px solid var(--live);
+  padding:8px 10px; margin-bottom:10px;
+}
+.voice.mod .help-note{border-left-color:var(--mod);}
+.help-note b{font-weight:600;}
+.help-note .ex{display:block; margin-top:5px; color:var(--ink-2); font-style:italic;}
+/* Arabic help reads right to left. The panels themselves do not flip, because
+   a signal chain runs left to right on every instrument in the world. */
+.help-note[dir="rtl"], .arch-note[dir="rtl"]{text-align:right;}
+.help-note[dir="rtl"]{border-left:0; border-right:2px solid var(--live); padding:8px 10px;}
+.voice.mod .help-note[dir="rtl"]{border-right-color:var(--mod);}
+.arch-note[dir="rtl"]{border-left:0; border-right:2px solid var(--live); padding:7px 9px;}
+.voice.mod .arch-note[dir="rtl"]{border-right-color:var(--mod);}
+
+@media (prefers-reduced-motion: reduce){*{animation:none !important; transition:none !important;}}
+</style>
+</head>
+<body>
+
+<div id="curtain"><div class="card">
+  <h1>ADrum</h1>
+  <p id="curtainA">Four percussion voices you play by hand. Hit the pads, the A S D F keys, or a MIDI controller. Turn on Help to read what each section does.</p>
+  <p id="curtainB">Browsers only start audio after you click. Headphones are recommended — keep the volume moderate at first, since resonance and delay both add level.</p>
+  <div class="langseg" id="langSegStart" style="margin-bottom:14px"></div>
+  <button class="btn" id="startBtn">Start the engine</button>
+</div></div>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="wordmark">AD<span>·</span>RUM</div>
+    <div class="tagline">four percussion voices · engine prototype, no help system yet</div>
+    <div class="masthead-tools">
+      <span class="tiny" id="midiLabel">MIDI: none</span>
+      <button class="btn" id="learnBtn">MIDI learn</button>
+      <button class="btn" id="panicBtn">Silence</button>
+      <button class="btn" id="helpBtn">Help</button>
+    </div>
+  </header>
+
+  <div class="learnbar">
+    <span class="grow" id="learnMsg"></span>
+    <button class="btn" id="learnClear">Clear all</button>
+    <button class="btn" id="learnDone">Done</button>
+  </div>
+
+  <div class="helpbar">
+    <span class="lbl" id="helpLangLbl">Help language</span>
+    <div class="langseg" id="langSeg"></div>
+  </div>
+
+  <section class="padbed">
+    <div class="panel-head"><span class="panel-name">Output</span><span class="panel-what">what you are hearing</span></div>
+    <div class="scr">
+      <span class="scr-tag">Oscilloscope</span>
+      <canvas id="scope" width="720" height="120"></canvas>
+    </div>
+    <div class="padbar">
+      <span class="tiny" id="midiHint">MIDI notes 36 38 42 45, or any note in order</span>
+      <div style="margin-left:auto; min-width:170px">
+        <div class="ctl" id="ctlMaster" data-key="master" style="margin:0">
+          <div class="ctl-head"><span>Master</span>
+            <span class="cc" id="ccMaster"></span>
+            <span class="v" id="masterV"></span></div>
+          <input type="range" id="master" min="0" max="1" step="0.001">
+          <span class="hwmark" id="hwMaster"></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="padbed">
+    <div class="panel-head"><span class="panel-name">Pads</span><span class="panel-what">played, not sequenced</span></div>
+    <div class="help" data-help="pads"></div>
+    <div class="pads" id="pads"></div>
+    <div class="padbar"><span class="tiny">Keys A S D F</span></div>
+  </section>
+
+  <div class="rack" id="rack"></div>
+
+</div>
+
+<script id="workletCode" type="text/worklet">
+const NV = 4;
+
+/* Soft limiter, lifted from 4LS: linear below the knee so ordinary signals add
+   no harmonics of their own, and hard-capped at L above it. */
+function limitTo(x, L){
+  const k = 0.7 * L;
+  const ax = x < 0 ? -x : x;
+  if (ax <= k) return x;
+  const y = k + (L - k) * Math.tanh((ax - k) / (L - k));
+  return x < 0 ? -y : y;
+}
+
+function polyBlep(t, dt){
+  if (t < dt){ t = t / dt; return t + t - t * t - 1; }
+  if (t > 1 - dt){ t = (t - 1) / dt; return t * t + t + t + 1; }
+  return 0;
+}
+
+class SVF {
+  constructor(){ this.ic1 = 0; this.ic2 = 0; this.a1 = 0; this.a2 = 0; this.a3 = 0; this.k = 1; this.sat = 2; }
+  setCoef(fc, q, sr){
+    if (fc < 15) fc = 15;
+    const nyq = sr * 0.45;
+    if (fc > nyq) fc = nyq;
+    if (q < 0.5) q = 0.5;
+    const g = Math.tan(Math.PI * fc / sr);
+    const u = Math.min(1, Math.max(0, (q - 5) / 13));
+    const k = (1 / q) * (1 - u) + (-0.075) * u;
+    const sing = Math.min(1, Math.max(0, (q - 10.5) / 1.5));
+    this.sat = 2.5 + (0.55 - 2.5) * sing;
+    this.a1 = 1 / (1 + g * (g + k));
+    this.a2 = g * this.a1;
+    this.a3 = g * this.a2;
+    this.k = k;
+  }
+  run(v0){
+    const v3 = v0 - this.ic2;
+    const v1 = this.a1 * this.ic1 + this.a2 * v3;
+    const v2 = this.ic2 + this.a2 * this.ic1 + this.a3 * v3;
+    this.ic1 = limitTo(2 * v1 - this.ic1, this.sat);
+    this.ic2 = 2 * v2 - this.ic2;
+    this.low = v2;
+    this.high = v0 - this.k * v1 - v2;
+    if (!isFinite(this.ic1)){ this.ic1 = 0; this.ic2 = 0; this.low = 0; this.high = 0; }
+  }
+}
+
+/* AD only. The 0.2172 factor is the same calibration 4LS uses: v falls to 1%
+   of where it started after exactly the time shown on the control, so the
+   label is not a lie. */
+class AD {
+  constructor(){ this.v = 0; this.stage = 0; }
+  trig(){ this.stage = 1; }
+  step(A, D, sr){
+    if (this.stage === 1){
+      this.v += 1 / Math.max(A * sr, 1);
+      if (this.v >= 1){ this.v = 1; this.stage = 2; }
+    } else if (this.stage === 2){
+      this.v *= Math.exp(-1 / Math.max(D * 0.2172 * sr, 1));
+      if (this.v < 0.0004){ this.v = 0; this.stage = 0; }
+    }
+    return this.v;
+  }
+}
+
+/* the classic six-oscillator metallic cluster: inharmonic ratios, so no
+   fundamental ever forms and the ear hears noise with a colour rather than
+   a pitch */
+const METAL = [1, 1.4471, 1.6170, 1.9265, 2.5028, 2.6637];
+
+class Voice {
+  constructor(sr){
+    this.amp = new AD();
+    this.pitch = new AD();
+    this.filt = new SVF();
+    this.ph = new Float64Array(METAL.length);
+    for (let i = 0; i < METAL.length; i++) this.ph[i] = Math.random();
+    this.noise = 0;
+    this.dN = Math.ceil(sr * 0.85);
+    this.dBuf = new Float32Array(this.dN);
+    this.wi = 0;
+    this.p = {
+      arch:0, tune:55, bend:24, bendD:0.04, colour:0.8,
+      a:0.001, d:0.35,
+      ftype:0, cut:16000, res:0.7,
+      dtime:0.18, dfb:0.4, dmix:0,
+      pan:0, level:0.8
+    };
+    this.setColour(this.p.colour);
+    this.setPan(0);
+  }
+  /* Colour is the coefficient of a one-pole on the noise: near 1 lets every
+     new random sample through for white, near 0 smooths heavily for a dark
+     rumble. Smoothing also drops the level, so the gain is compensated from
+     the one-pole's own RMS — otherwise turning Colour down would just sound
+     like turning the voice down. */
+  setColour(c){
+    const a = 0.02 * Math.pow(50, Math.min(1, Math.max(0, c)));
+    this.nk = a;
+    this.nGain = 0.9 / Math.sqrt(a / (2 - a));
+  }
+  /* Equal-power pan: the two gains are a sine/cosine pair, so a voice swept
+     across the stereo field keeps a constant apparent loudness. Straight
+     linear gains would dip audibly in the middle. */
+  setPan(v){
+    const a = (Math.min(1, Math.max(-1, v)) + 1) * Math.PI / 4;
+    this.pL = Math.cos(a);
+    this.pR = Math.sin(a);
+  }
+  trig(){ this.amp.trig(); this.pitch.trig(); }
+  get busy(){ return this.amp.stage !== 0; }
+}
+
+class ADrum extends AudioWorkletProcessor {
+  constructor(){
+    super();
+    this.sr = sampleRate;
+    this.v = [];
+    for (let i = 0; i < NV; i++) this.v.push(new Voice(this.sr));
+    this.master = 0.7;
+    this.report = 0;
+    this.port.onmessage = e => {
+      const m = e.data;
+      if (m.t === 'trig') this.v[m.i].trig();
+      else if (m.t === 'p'){
+        this.v[m.i].p[m.n] = m.v;
+        if (m.n === 'colour') this.v[m.i].setColour(m.v);
+        else if (m.n === 'pan') this.v[m.i].setPan(m.v);
+      }
+      else if (m.t === 'master') this.master = m.v;
+      else if (m.t === 'panic'){
+        for (const V of this.v){
+          V.amp.v = 0; V.amp.stage = 0; V.pitch.v = 0; V.pitch.stage = 0;
+          V.dBuf.fill(0);
+        }
+      }
+    };
+  }
+
+  process(inputs, outputs){
+    const out = outputs[0];
+    const L = out[0], R = out.length > 1 ? out[1] : null;
+    const n = L.length, sr = this.sr;
+
+    for (let s = 0; s < n; s++){
+      let mixL = 0, mixR = 0;
+
+      for (let vi = 0; vi < NV; vi++){
+        const V = this.v[vi], p = V.p;
+        let dry = 0;
+
+        if (V.busy){
+          const a = V.amp.step(p.a, p.d, sr);
+          const pe = V.pitch.step(0.0005, p.bendD, sr);
+
+          if (p.arch === 0){
+            // pitched decay: one sine, dragged down by the pitch envelope
+            const f = Math.min(p.tune * Math.pow(2, (p.bend / 12) * pe), sr * 0.45);
+            V.ph[0] += f / sr; if (V.ph[0] >= 1) V.ph[0] -= 1;
+            dry = Math.sin(V.ph[0] * Math.PI * 2);
+          } else if (p.arch === 1){
+            // noise, tilted by Colour before the filter gets to it
+            V.noise = V.noise * (1 - V.nk) + (Math.random() * 2 - 1) * V.nk;
+            dry = V.noise * V.nGain;
+          } else {
+            // metallic cluster: six square waves at inharmonic ratios
+            let acc = 0;
+            for (let i = 0; i < METAL.length; i++){
+              const f = Math.min(p.tune * METAL[i], sr * 0.45);
+              const dt = f / sr;
+              V.ph[i] += dt; if (V.ph[i] >= 1) V.ph[i] -= 1;
+              let sq = V.ph[i] < 0.5 ? -1 : 1;
+              sq -= polyBlep(V.ph[i], dt);
+              let b = V.ph[i] - 0.5; if (b < 0) b += 1;
+              sq += polyBlep(b, dt);
+              acc += sq;
+            }
+            dry = acc / METAL.length * 1.4;
+          }
+
+          if ((s & 31) === 0) V.filt.setCoef(p.cut, p.res, sr);
+          V.filt.run(dry);
+          dry = (p.ftype === 0 ? V.filt.low : V.filt.high) * a * p.level;
+        }
+
+        // --- per-voice delay ---
+        // The voice feeds its own line at full level, so Mix alone decides how
+        // much comes back. A separate send would only multiply against Mix to
+        // give the same wet level twice over.
+        let wet = 0;
+        if (p.dmix > 0.001 || V.dBuf[V.wi] !== 0){
+          let ds = Math.round(p.dtime * sr);
+          if (ds < 1) ds = 1;
+          if (ds > V.dN - 1) ds = V.dN - 1;
+          let rd = V.wi - ds;
+          if (rd < 0) rd += V.dN;
+          const dv = V.dBuf[rd];
+          // feedback is capped upstream at 0.85, and the write is limited, so
+          // a delay tuned to reinforce itself gets loud but never runs away
+          V.dBuf[V.wi] = limitTo(dry + dv * p.dfb, 1.2);
+          V.wi++; if (V.wi >= V.dN) V.wi = 0;
+          wet = dv * p.dmix;
+        }
+
+        // the delay sits at the same point in the field as the voice feeding it
+        const sum = dry + wet;
+        mixL += sum * V.pL;
+        mixR += sum * V.pR;
+      }
+
+      const g = this.master * 0.7;
+      L[s] = limitTo(mixL * g, 1);
+      if (R) R[s] = limitTo(mixR * g, 1);
+    }
+
+    this.report += n;
+    if (this.report > sr / 40){
+      this.report = 0;
+      const act = [];
+      for (const V of this.v) act.push(V.busy ? 1 : 0);
+      this.port.postMessage({ t:'act', act:act });
+    }
+    return true;
+  }
+}
+registerProcessor('adrum', ADrum);
+</script>
+
+<script>
+"use strict";
+
+/* ============================================================
+   LANGUAGE
+   Control names — Attack, Decay, Colour, Bend, Mix, Pan, Low pass — stay in
+   English in every language, the same convention 4LS and Video Surfer use.
+   They are short international vocabulary, and translating them would break
+   the link between the sentence and the control it is describing.
+   ============================================================ */
+const I18N = {
+en:{
+  helpLang:'Help language',
+  start:{
+    a:'Four percussion voices you play by hand. Hit the pads, the A S D F keys, or a MIDI controller. Turn on Help to read what each section does.',
+    b:'Browsers only start audio after you click. Headphones are recommended — keep the volume moderate at first, since resonance and delay both add level.',
+    btn:'Start the engine'
+  },
+  arch:[
+    'One sine, pulled down by a fast pitch envelope. A long Decay gives a kick, a short one gives a tom, and extreme Bend gives a zap.',
+    'No pitch at all. Colour tilts it from a dark rumble to full white before the filter shapes it. Narrow and mid gives a snare, wide and open gives a wash.',
+    'Six square waves at ratios that never line up, so no fundamental ever forms. High pass it short for a hat, or let it ring for a bell.'
+  ],
+  help:{
+    pads:{ t:'Four voices, played by hand.',
+      b:'There is no sequencer. Every hit happens at the moment you make it, so the timing is yours. That is also why this works the same alone or in a group.',
+      ex:['Play the pads, the A S D F keys, or a MIDI controller. Any pad or note fires a voice.'] },
+    osc:{ t:'The engine is where the sound is born.',
+      b:'Any voice can run any of the three engines. The same engine at different settings becomes a different drum — a kick and a tom are not two things, they are one engine with two Decay times.',
+      ex:['Try: set two voices to the same engine and change nothing but Decay.'] },
+    env:{ t:'AD — attack, then decay.',
+      b:'Attack is how fast the sound arrives, Decay is how fast it falls away. There is no sustain, because a struck drum does not hold: it sounds and it dies. Snappy and Slow move both times into a shorter or a longer range.',
+      ex:['The times shown are what the engine receives, so switching to Slow changes the reading as well as the sound.'] },
+    filt:{ t:'One filter, low pass or high pass.',
+      b:'Low pass keeps what lies below the cutoff and darkens the sound. High pass keeps what lies above and thins it. Resonance lifts the frequencies right at the cutoff, and high enough it makes the filter ring on its own.',
+      ex:['Try: Noise engine, Low pass, a low Cutoff and a long Decay. The snare voice becomes a floor tom.'] },
+    delay:{ t:'An echo, one for each voice.',
+      b:'Time sets the gap between repeats, Feedback sets how many there are, and Mix sets how loud they come back. At Mix zero there is no delay at all.',
+      ex:['Feedback is capped so the echoes can never run away, but a short Time with high Feedback still builds up fast.'] },
+    out:{ t:'Level and Pan — a mixer in two controls.',
+      b:'Level is how loud this voice sits against the other three. Pan places it to the left or the right. Balancing a kit is nothing more than these two, used carefully.',
+      ex:['Pan needs headphones or two speakers. Through a single phone speaker it will sound like nothing is happening.'] }
+  }
+},
+es:{
+  helpLang:'Idioma de la ayuda',
+  start:{
+    a:'Cuatro voces de percusión que se tocan con las manos. Golpea los pads, las teclas A S D F o un controlador MIDI. Activa Help para leer qué hace cada sección.',
+    b:'Los navegadores solo inician el audio después de un clic. Se recomienda usar auriculares y empezar con el volumen moderado, porque la resonancia y el delay suman nivel.',
+    btn:'Iniciar el motor'
+  },
+  arch:[
+    'Una sola senoidal, arrastrada hacia abajo por una envolvente de tono muy rápida. Un Decay largo da un bombo, uno corto da un tom, y un Bend extremo da un zumbido eléctrico.',
+    'Sin tono alguno. Colour lo inclina desde un retumbo oscuro hasta el ruido blanco antes de que el filtro le dé forma. Estrecho y medio da una caja; ancho y abierto da un oleaje.',
+    'Seis ondas cuadradas en proporciones que nunca coinciden, así que no llega a formarse ninguna fundamental. Fíltralo con High pass y corto para un charles, o déjalo sonar para una campana.'
+  ],
+  help:{
+    pads:{ t:'Cuatro voces, tocadas a mano.',
+      b:'No hay secuenciador. Cada golpe ocurre en el momento en que tú lo das, así que el tiempo es tuyo. Por eso mismo esto funciona igual en solitario que en grupo.',
+      ex:['Toca los pads, las teclas A S D F o un controlador MIDI. Cualquier pad o nota dispara una voz.'] },
+    osc:{ t:'El motor es donde nace el sonido.',
+      b:'Cualquier voz puede usar cualquiera de los tres motores. El mismo motor con otros ajustes se convierte en otro tambor: un bombo y un tom no son dos cosas distintas, son un motor con dos tiempos de Decay.',
+      ex:['Prueba: pon dos voces en el mismo motor y cambia únicamente el Decay.'] },
+    env:{ t:'AD — ataque y caída.',
+      b:'Attack es lo rápido que llega el sonido y Decay lo rápido que se apaga. No hay sustain, porque un tambor golpeado no se mantiene: suena y muere. Snappy y Slow llevan ambos tiempos a un rango más corto o más largo.',
+      ex:['Los tiempos que se muestran son los que recibe el motor, así que pasar a Slow cambia la lectura además del sonido.'] },
+    filt:{ t:'Un filtro, low pass o high pass.',
+      b:'El low pass conserva lo que está por debajo del corte y oscurece el sonido. El high pass conserva lo que está por encima y lo adelgaza. Resonance realza las frecuencias justo en el corte, y si sube lo suficiente hace que el filtro suene por sí solo.',
+      ex:['Prueba: motor Noise, Low pass, Cutoff bajo y Decay largo. La voz de caja se convierte en un tom de suelo.'] },
+    delay:{ t:'Un eco, uno para cada voz.',
+      b:'Time fija la distancia entre repeticiones, Feedback cuántas hay y Mix con qué fuerza vuelven. Con Mix en cero no hay delay en absoluto.',
+      ex:['El Feedback está limitado para que los ecos nunca se desboquen, pero un Time corto con Feedback alto se acumula igual de rápido.'] },
+    out:{ t:'Level y Pan — una mesa de mezclas en dos controles.',
+      b:'Level es cuánto suena esta voz frente a las otras tres. Pan la coloca a la izquierda o a la derecha. Equilibrar una batería no es más que estos dos controles, usados con cuidado.',
+      ex:['El Pan necesita auriculares o dos altavoces. Por el altavoz único de un móvil parecerá que no ocurre nada.'] }
+  }
+},
+ko:{
+  helpLang:'도움말 언어',
+  start:{
+    a:'손으로 연주하는 네 개의 타악기 보이스입니다. 패드나 A S D F 키, 또는 MIDI 컨트롤러로 치세요. Help를 켜면 각 섹션의 설명을 읽을 수 있습니다.',
+    b:'브라우저는 클릭한 뒤에야 소리를 낼 수 있습니다. 헤드폰 사용을 권하며, 레조넌스와 딜레이가 모두 음량을 더하므로 처음에는 볼륨을 낮춰 두세요.',
+    btn:'엔진 시작'
+  },
+  arch:[
+    '사인파 하나를 아주 빠른 피치 엔벨로프가 아래로 끌어내립니다. Decay가 길면 킥, 짧으면 톰이 되고, Bend를 극단으로 올리면 전자음 같은 소리가 납니다.',
+    '음정이 전혀 없습니다. Colour가 어두운 저음의 울림에서 완전한 화이트 노이즈까지 성격을 기울이고, 그다음 필터가 모양을 잡습니다. 좁고 중간대면 스네어, 넓고 열려 있으면 파도 소리가 됩니다.',
+    '서로 맞아떨어지지 않는 비율의 사각파 여섯 개라서 기음이 생기지 않습니다. High pass로 짧게 자르면 하이햇, 그대로 울리게 두면 종소리가 됩니다.'
+  ],
+  help:{
+    pads:{ t:'손으로 연주하는 네 개의 보이스.',
+      b:'시퀀서는 없습니다. 모든 타격은 당신이 치는 그 순간에 일어나므로 박자는 당신의 것입니다. 그래서 혼자 연주할 때나 여럿이 함께할 때나 똑같이 동작합니다.',
+      ex:['패드, A S D F 키, 또는 MIDI 컨트롤러로 연주하세요. 어떤 패드나 음이든 보이스를 울립니다.'] },
+    osc:{ t:'엔진은 소리가 태어나는 곳입니다.',
+      b:'어느 보이스든 세 가지 엔진 중 무엇이든 쓸 수 있습니다. 같은 엔진도 설정이 달라지면 다른 북이 됩니다. 킥과 톰은 서로 다른 두 가지가 아니라, Decay 값이 다른 하나의 엔진입니다.',
+      ex:['해보기: 두 보이스를 같은 엔진으로 두고 Decay만 다르게 해 보세요.'] },
+    env:{ t:'AD — 어택, 그리고 디케이.',
+      b:'Attack은 소리가 얼마나 빨리 도달하는지, Decay는 얼마나 빨리 사그라드는지를 정합니다. 서스테인은 없습니다. 두드린 북은 소리를 붙들지 않고, 울린 뒤 사라지기 때문입니다. Snappy와 Slow는 두 시간을 함께 더 짧은 범위나 더 긴 범위로 옮깁니다.',
+      ex:['표시되는 시간은 엔진이 실제로 받는 값이므로, Slow로 바꾸면 소리와 함께 표시도 달라집니다.'] },
+    filt:{ t:'필터 하나, low pass 또는 high pass.',
+      b:'low pass는 차단 주파수보다 낮은 쪽을 남겨 소리를 어둡게 하고, high pass는 높은 쪽을 남겨 얇게 만듭니다. Resonance는 차단 지점 바로 근처를 들어 올리며, 충분히 높이면 필터가 스스로 울기 시작합니다.',
+      ex:['해보기: Noise 엔진에 Low pass, Cutoff를 낮게, Decay를 길게. 스네어 보이스가 플로어 톰이 됩니다.'] },
+    delay:{ t:'에코, 보이스마다 하나씩.',
+      b:'Time은 반복 사이의 간격을, Feedback은 몇 번이나 반복될지를, Mix는 얼마나 크게 돌아올지를 정합니다. Mix가 0이면 딜레이는 전혀 걸리지 않습니다.',
+      ex:['Feedback에는 상한이 있어 에코가 걷잡을 수 없이 커지지는 않지만, Time이 짧고 Feedback이 높으면 그래도 금방 쌓입니다.'] },
+    out:{ t:'Level과 Pan — 컨트롤 두 개짜리 믹서.',
+      b:'Level은 이 보이스가 나머지 셋에 비해 얼마나 크게 들릴지를 정합니다. Pan은 왼쪽이나 오른쪽에 자리를 잡아 줍니다. 드럼 세트의 균형을 잡는 일은 이 둘을 신중하게 쓰는 것이 전부입니다.',
+      ex:['Pan은 헤드폰이나 스피커 두 대가 있어야 합니다. 휴대폰 스피커 하나로는 아무 일도 일어나지 않는 것처럼 들립니다.'] }
+  }
+},
+ar:{
+  helpLang:'لغة المساعدة',
+  start:{
+    a:'أربعة أصوات إيقاعية تُعزف باليد. اضرب الـ pads، أو حروف A S D F، أو وحدة تحكم MIDI. شغّل Help لقراءة شرح كل قسم.',
+    b:'لا تبدأ المتصفحات تشغيل الصوت إلا بعد نقرة منك. يُفضَّل استخدام سماعات الرأس، مع إبقاء مستوى الصوت معتدلًا في البداية، لأن الرنين والتأخير كليهما يزيدان المستوى.',
+    btn:'ابدأ المحرك'
+  },
+  arch:[
+    'موجة جيبية واحدة يجذبها إلى أسفل مغلِّف طبقة سريع جدًا. قيمة Decay الطويلة تعطي طبلة كبيرة، والقصيرة تعطي طبلة توم، و Bend المتطرف يعطي صوتًا إلكترونيًا حادًا.',
+    'لا طبقة صوتية على الإطلاق. يميل Colour بالصوت من هدير معتم إلى ضجيج أبيض كامل قبل أن يشكّله المرشِّح. الضيق المتوسط يعطي طبلة صغيرة، والواسع المفتوح يعطي صوتًا كالموج.',
+    'ست موجات مربعة بنسب لا تتوافق أبدًا، فلا يتكوّن أي تردد أساسي. مرِّره بـ High pass قصيرًا تحصل على صنج قدم، أو دعه يرن تحصل على جرس.'
+  ],
+  help:{
+    pads:{ t:'أربعة أصوات، تُعزف باليد.',
+      b:'لا يوجد مُتابِع خطوات. كل ضربة تقع في اللحظة التي تصنعها فيها، فالإيقاع لك أنت. ولهذا السبب نفسه تعمل الآلة بالطريقة ذاتها منفردًا كنت أم ضمن مجموعة.',
+      ex:['اعزف على الـ pads، أو حروف A S D F، أو وحدة تحكم MIDI. أي pad أو نغمة تُطلق صوتًا.'] },
+    osc:{ t:'المحرك هو حيث يولد الصوت.',
+      b:'يمكن لأي صوت أن يعمل بأي من المحركات الثلاثة. والمحرك نفسه بإعدادات مختلفة يصير طبلة مختلفة: الطبلة الكبيرة وطبلة التوم ليستا شيئين، بل محرك واحد بزمني Decay مختلفين.',
+      ex:['جرِّب: اضبط صوتين على المحرك نفسه ولا تغيّر سوى Decay.'] },
+    env:{ t:'AD — هجوم ثم هبوط.',
+      b:'يحدد Attack سرعة وصول الصوت، ويحدد Decay سرعة خفوته. ولا يوجد سستين، لأن الطبلة المضروبة لا تُمسك صوتها: تُقرع ثم تخبو. ويحرّك Snappy و Slow الزمنين معًا إلى مدى أقصر أو أطول.',
+      ex:['الأزمنة المعروضة هي ما يتلقاه المحرك فعلًا، فالانتقال إلى Slow يغيّر القراءة كما يغيّر الصوت.'] },
+    filt:{ t:'مرشِّح واحد، low pass أو high pass.',
+      b:'يُبقي low pass ما دون تردد القطع فيُعتم الصوت، ويُبقي high pass ما فوقه فيجعله أرفع. ويرفع Resonance الترددات الواقعة عند نقطة القطع تمامًا، وإذا ارتفع كفاية جعل المرشِّح يرن من تلقاء نفسه.',
+      ex:['جرِّب: محرك Noise مع Low pass، و Cutoff منخفض، و Decay طويل. يتحول صوت الطبلة الصغيرة إلى طبلة توم أرضية.'] },
+    delay:{ t:'صدى، واحد لكل صوت.',
+      b:'يحدد Time المسافة بين التكرارات، ويحدد Feedback عددها، ويحدد Mix مقدار علوّها عند عودتها. وعند Mix صفر لا يوجد تأخير إطلاقًا.',
+      ex:['قيمة Feedback مسقوفة كي لا تنفلت الأصداء أبدًا، لكن Time القصير مع Feedback مرتفع يتراكم بسرعة رغم ذلك.'] },
+    out:{ t:'Level و Pan — مازج في عنصري تحكم.',
+      b:'يحدد Level مقدار علوّ هذا الصوت أمام الأصوات الثلاثة الأخرى. ويضعه Pan إلى اليسار أو إلى اليمين. وموازنة طقم الطبول ليست سوى هذين الاثنين، يُستعملان بعناية.',
+      ex:['يحتاج Pan إلى سماعات رأس أو مكبّرين. أما عبر مكبر الهاتف الواحد فسيبدو وكأن شيئًا لا يحدث.'] }
+  }
+},
+zh:{
+  helpLang:'帮助语言',
+  start:{
+    a:'四个用手演奏的打击乐声部。敲击屏幕上的 pad、A S D F 键，或者 MIDI 控制器。打开 Help 可以阅读每个部分的说明。',
+    b:'浏览器只有在你点击之后才会开始播放声音。建议戴耳机，并且一开始把音量调得适中一些，因为共振和延迟都会增加音量。',
+    btn:'启动引擎'
+  },
+  arch:[
+    '一个正弦波，被一条极快的音高包络往下拉。Decay 长了是底鼓，短了是嗵鼓，把 Bend 推到极端则是一声电子啸叫。',
+    '完全没有音高。Colour 会把它从低沉的隆隆声一直调到纯白噪声，然后由滤波器塑形。窄而居中是军鼓，宽而敞开是一片浪声。',
+    '六个方波，比例彼此永远对不上，所以不会形成基音。用 High pass 切短就是踩镲，让它一直响下去就是铃。'
+  ],
+  help:{
+    pads:{ t:'四个声部，用手演奏。',
+      b:'这里没有音序器。每一下都发生在你敲下去的那一刻，所以节奏由你掌握。也正因如此，一个人玩和一群人一起玩，它的表现完全一样。',
+      ex:['用 pad、A S D F 键，或者 MIDI 控制器演奏。任何一个 pad 或音符都会触发一个声部。'] },
+    osc:{ t:'引擎是声音诞生的地方。',
+      b:'每个声部都可以使用这三种引擎中的任意一种。同一个引擎换了参数就变成另一件鼓：底鼓和嗵鼓并不是两样东西，而是同一个引擎的两个 Decay 值。',
+      ex:['试试：把两个声部设成同一个引擎，只改变 Decay。'] },
+    env:{ t:'AD — 起音，然后衰减。',
+      b:'Attack 决定声音来得多快，Decay 决定它落下得多快。这里没有延音，因为被敲响的鼓不会把声音保持住：它响一下，然后消失。Snappy 和 Slow 会把这两个时间一起移到更短或更长的范围。',
+      ex:['显示的时间就是引擎实际收到的值，所以切换到 Slow 时，读数和声音会一起改变。'] },
+    filt:{ t:'一个滤波器，low pass 或 high pass。',
+      b:'low pass 保留截止频率以下的部分，让声音变暗；high pass 保留以上的部分，让声音变薄。Resonance 会抬升截止点附近的频率，抬得够高时滤波器就会自己发声。',
+      ex:['试试：Noise 引擎，Low pass，Cutoff 调低，Decay 调长。军鼓声部就变成了落地嗵鼓。'] },
+    delay:{ t:'回声，每个声部各有一个。',
+      b:'Time 决定每次重复之间的间隔，Feedback 决定重复多少次，Mix 决定它们回来时有多响。Mix 归零就完全没有延迟。',
+      ex:['Feedback 设有上限，回声永远不会失控，但 Time 短加上 Feedback 高，仍然会很快堆积起来。'] },
+    out:{ t:'Level 和 Pan——两个旋钮就是一台调音台。',
+      b:'Level 决定这个声部相对于另外三个有多响。Pan 把它放到左边或右边。所谓平衡一套鼓，无非就是仔细地使用这两样东西。',
+      ex:['Pan 需要耳机或者两只音箱。用手机的单个扬声器听，会觉得什么都没发生。'] }
+  }
+},
+ja:{
+  helpLang:'ヘルプの言語',
+  start:{
+    a:'手で演奏する 4 つの打楽器ボイスです。画面のパッド、A S D F キー、または MIDI コントローラーで叩いてください。Help をオンにすると各セクションの説明が読めます。',
+    b:'ブラウザはクリックされてからでないと音を鳴らせません。ヘッドフォンの使用をおすすめします。レゾナンスもディレイも音量を足すので、最初は控えめにしておいてください。',
+    btn:'エンジンを起動'
+  },
+  arch:[
+    'サイン波が 1 つ、とても速いピッチエンベロープに下へ引きずり下ろされます。Decay が長ければキック、短ければタム、Bend を極端にすれば電子的な急降下音になります。',
+    '音程はまったくありません。Colour が暗いうなりから完全なホワイトノイズまで性格を傾け、そのあとフィルターが形を決めます。狭く中域ならスネア、広く開けば波のような音になります。',
+    '互いに割り切れない比率の矩形波が 6 つ。だから基音が生まれません。High pass で短く切ればハイハット、そのまま鳴らせばベルになります。'
+  ],
+  help:{
+    pads:{ t:'4 つのボイスを、手で演奏する。',
+      b:'シーケンサーはありません。すべての一打はあなたが叩いたその瞬間に鳴るので、タイミングはあなたのものです。だからこそ、ひとりで弾いても大勢で合わせても同じように働きます。',
+      ex:['パッド、A S D F キー、または MIDI コントローラーで演奏します。どのパッドでも、どの音でもボイスが鳴ります。'] },
+    osc:{ t:'エンジンは音が生まれる場所です。',
+      b:'どのボイスも 3 つのエンジンのどれにでもなれます。同じエンジンでも設定が変われば別の太鼓になります。キックとタムは 2 つの別物ではなく、Decay の値が違うだけの 1 つのエンジンです。',
+      ex:['試してみる：2 つのボイスを同じエンジンにして、Decay だけを変えてみてください。'] },
+    env:{ t:'AD — アタック、そしてディケイ。',
+      b:'Attack は音がどれだけ速く立ち上がるか、Decay はどれだけ速く消えていくかです。サスティンはありません。叩かれた太鼓は音を保たず、鳴って、消えるからです。Snappy と Slow は 2 つの時間をまとめて短い側か長い側へ移します。',
+      ex:['表示される時間はエンジンが実際に受け取る値なので、Slow に切り替えると音といっしょに表示も変わります。'] },
+    filt:{ t:'フィルターは 1 つ、low pass か high pass。',
+      b:'low pass はカットオフより下を残して音を暗くし、high pass は上を残して音を細くします。Resonance はカットオフのすぐ近くを持ち上げ、十分に上げるとフィルターが自分で鳴りはじめます。',
+      ex:['試してみる：Noise エンジンに Low pass、Cutoff を低く、Decay を長く。スネアのボイスがフロアタムになります。'] },
+    delay:{ t:'エコー、ボイスごとに 1 つ。',
+      b:'Time は繰り返しの間隔、Feedback は何回返ってくるか、Mix はどれくらいの大きさで返ってくるかを決めます。Mix がゼロならディレイはまったくかかりません。',
+      ex:['Feedback には上限があるのでエコーが暴走することはありませんが、Time が短く Feedback が高ければやはり速く積み上がります。'] },
+    out:{ t:'Level と Pan — コントロール 2 つのミキサー。',
+      b:'Level はこのボイスが残りの 3 つに対してどれだけ大きく鳴るかです。Pan は左か右かの位置を決めます。ドラムセットのバランスを取るとは、この 2 つを丁寧に使うことに尽きます。',
+      ex:['Pan にはヘッドフォンかスピーカー 2 本が必要です。スマートフォンの 1 つのスピーカーでは、何も起きていないように聞こえます。'] }
+  }
+}
+};
+
+const LANGS = [
+  { id:'en', label:'English' },
+  { id:'es', label:'Espa\u00f1ol' },
+  { id:'ko', label:'\ud55c\uad6d\uc5b4' },
+  { id:'ar', label:'\u0627\u0644\u0639\u0631\u0628\u064a\u0629', rtl:true },
+  { id:'zh', label:'\u4e2d\u6587' },
+  { id:'ja', label:'\u65e5\u672c\u8a9e' }
+];
+let lang = 'en';
+const isRTL = () => !!(LANGS.find(l => l.id === lang) || {}).rtl;
+
+/* every lookup falls back to English, so a missing string is never a blank */
+function T(path){
+  const walk = root => path.split('.').reduce((o, k) => (o == null ? undefined : o[k]), root);
+  const v = walk(I18N[lang]);
+  return v === undefined ? walk(I18N.en) : v;
+}
+
+/* ============================================================
+   PARAMETERS
+   ============================================================ */
+const HZ  = v => v < 1000 ? v.toFixed(0) + ' Hz' : (v / 1000).toFixed(2) + ' kHz';
+const SEC = v => v < 1 ? (v * 1000).toFixed(0) + ' ms' : v.toFixed(2) + ' s';
+const NUM = v => v.toFixed(2);
+
+/* Engine names stay in English everywhere, like every other control label.
+   The description beside them is what gets translated. */
+const ARCH = [{ name:'Pitched decay' }, { name:'Noise' }, { name:'Metal' }];
+
+/* Section headers carry their own selector, so every switch sits directly
+   above the sliders it acts on rather than in a block at the top. */
+const CTLS = [
+  { s:'Oscillator', seg:'arch', help:'osc' },
+  { n:'tune',  t:'Tune',    min:25,    max:1400, log:true, fmt:HZ,  arch:[0,2] },
+  { n:'bend',  t:'Bend',    min:0,     max:48,   fmt:v => v.toFixed(0) + ' st', arch:[0] },
+  { n:'bendD', t:'Bend fall', min:0.004, max:0.6, log:true, fmt:SEC, arch:[0] },
+  { n:'colour', t:'Colour', min:0, max:1, arch:[1],
+    fmt:v => v < 0.05 ? 'Dark' : v > 0.95 ? 'White' : NUM(v) },
+  { s:'Envelope', seg:'mode', help:'env' },
+  { n:'a',     t:'Attack',  min:0.0003, max:0.25, log:true, fmt:SEC },
+  { n:'d',     t:'Decay',   min:0.01,  max:3,    log:true, fmt:SEC },
+  { s:'Filter', seg:'ft', help:'filt' },
+  { n:'cut',   t:'Cutoff',  min:30,    max:16000, log:true, fmt:HZ },
+  { n:'res',   t:'Resonance', min:0.5, max:16,   log:true, fmt:NUM },
+  { s:'Delay', help:'delay' },
+  { n:'dtime', t:'Time',    min:0.02,  max:0.8,  log:true, fmt:SEC },
+  { n:'dfb',   t:'Feedback', min:0,    max:0.85, fmt:NUM },
+  { n:'dmix',  t:'Mix',     min:0,     max:1,    fmt:NUM },
+  { s:'Output', help:'out' },
+  { n:'pan',   t:'Pan',     min:-1,    max:1,    fmt:v =>
+      Math.abs(v) < 0.03 ? 'Centre'
+        : (v < 0 ? 'L' : 'R') + Math.round(Math.abs(v) * 100) },
+  { n:'level', t:'Level',   min:0,     max:1,    fmt:NUM }
+];
+
+const SEGS = {
+  arch: ARCH.map((a, k) => '<button data-v="' + k + '">' + a.name.split(' ')[0] + '</button>').join(''),
+  mode: '<button data-v="0">Snappy</button><button data-v="1">Slow</button>',
+  ft:   '<button data-v="0">Low pass</button><button data-v="1">High pass</button>'
+};
+
+/* snappy and slow are not two ranges of one knob — they scale the times the
+   engine actually receives, so the label always reads what you will hear */
+const MODE_SCALE = [0.3, 3];
+
+const DEFAULTS = [
+  { arch:0, tune:55,  bend:26, bendD:0.035, colour:0.8, a:0.0005, d:0.4,  ftype:0, cut:9000, res:0.7, level:0.85 },
+  { arch:1, tune:200, bend:0,  bendD:0.05,  colour:0.78, a:0.0008, d:0.16, ftype:0, cut:2400, res:3.5, level:0.6 },
+  { arch:2, tune:320, bend:0,  bendD:0.05,  colour:0.8, a:0.0005, d:0.06, ftype:1, cut:7000, res:1.2, level:0.45 },
+  { arch:0, tune:120, bend:9,  bendD:0.07,  colour:0.8, a:0.0008, d:0.55, ftype:0, cut:5000, res:1.4, level:0.7 }
+];
+
+const V = [];
+for (let i = 0; i < 4; i++){
+  const d = DEFAULTS[i];
+  V.push({
+    arch:d.arch, mode:0, ftype:d.ftype,
+    p:{ tune:d.tune, bend:d.bend, bendD:d.bendD, colour:d.colour, a:d.a, d:d.d,
+        cut:d.cut, res:d.res, dtime:0.18, dfb:0.35, dmix:0, pan:0, level:d.level },
+    el:{}
+  });
+}
+let master = 0.7;
+
+/* ============================================================
+   AUDIO
+   ============================================================ */
+let actx = null, node = null, scopeAn = null, scopeData = null, running = false;
+
+function sendP(i, n, v){ if (node) node.port.postMessage({ t:'p', i:i, n:n, v:v }); }
+
+/* the engine is told real seconds, mode included */
+function pushTimes(i){
+  const k = MODE_SCALE[V[i].mode];
+  sendP(i, 'a', V[i].p.a * k);
+  sendP(i, 'd', V[i].p.d * k);
+  sendP(i, 'bendD', V[i].p.bendD * k);
+}
+function pushAll(i){
+  const v = V[i];
+  sendP(i, 'arch', v.arch);
+  sendP(i, 'ftype', v.ftype);
+  for (const n in v.p) if (n !== 'a' && n !== 'd' && n !== 'bendD') sendP(i, n, v.p[n]);
+  pushTimes(i);
+}
+
+/* Loading the worklet from a blob: URL is the normal route and the one 4LS
+   uses, but it is refused when the page itself has an opaque origin — a
+   sandboxed preview frame, or file:// in Safari. A data: URL carries the same
+   source and is not treated as cross-origin, so it gets through where the
+   blob does not. */
+async function addWorklet(ctx, src){
+  const tried = [];
+  try {
+    const url = URL.createObjectURL(new Blob([src], { type:'application/javascript' }));
+    await ctx.audioWorklet.addModule(url);
+    URL.revokeObjectURL(url);
+    return 'blob';
+  } catch (e){ tried.push('blob: ' + e.message); }
+  try {
+    const b64 = btoa(unescape(encodeURIComponent(src)));
+    await ctx.audioWorklet.addModule('data:application/javascript;base64,' + b64);
+    return 'data';
+  } catch (e){ tried.push('data: ' + e.message); }
+  throw new Error(tried.join(' | '));
+}
+
+async function startAudio(){
+  if (running) return;
+  actx = new (window.AudioContext || window.webkitAudioContext)();
+  const src = document.getElementById('workletCode').textContent;
+  await addWorklet(actx, src);
+
+  node = new AudioWorkletNode(actx, 'adrum', { numberOfInputs:0, numberOfOutputs:1, outputChannelCount:[2] });
+
+  const safety = actx.createDynamicsCompressor();
+  safety.threshold.value = -6; safety.knee.value = 6;
+  safety.ratio.value = 12; safety.attack.value = 0.002; safety.release.value = 0.1;
+  node.connect(safety);
+  safety.connect(actx.destination);
+
+  scopeAn = actx.createAnalyser();
+  scopeAn.fftSize = 2048; scopeAn.smoothingTimeConstant = 0;
+  node.connect(scopeAn);
+  scopeData = new Float32Array(scopeAn.fftSize);
+
+  node.port.onmessage = e => { if (e.data.t === 'act') setPadLights(e.data.act); };
+
+  node.port.postMessage({ t:'master', v:master });
+  for (let i = 0; i < 4; i++) pushAll(i);
+  running = true;
+  if (actx.state === 'suspended') await actx.resume();
+}
+
+function trig(i){
+  if (node) node.port.postMessage({ t:'trig', i:i });
+  const pad = document.querySelector('.pad[data-i="' + i + '"]');
+  if (pad){ pad.classList.add('hit'); setTimeout(() => pad.classList.remove('hit'), 70); }
+}
+
+/* ============================================================
+   UI
+   ============================================================ */
+const toNorm = (c, v) => c.log ? Math.log(v / c.min) / Math.log(c.max / c.min)
+                               : (v - c.min) / (c.max - c.min);
+const fromNorm = (c, t) => c.log ? c.min * Math.pow(c.max / c.min, t)
+                                 : c.min + t * (c.max - c.min);
+
+/* MIDI learn state. Declared here because buildVoice registers into it, and
+   the behaviour that uses it is defined further down. */
+const REG = {};
+const ccToParam = {}, paramToCC = {}, hwPos = {}, pickedUp = {};
+let midiLearn = false, learnArmed = null, midiSeen = false;
+const MAP_KEY = 'adrum.midimap.v1';
+
+function buildVoice(i){
+  const v = V[i];
+  const sec = document.createElement('section');
+  sec.className = 'voice' + (i % 2 ? ' mod' : '');
+
+  let html =
+    '<div class="panel-head"><span class="panel-name">Voice ' + (i + 1) + '</span>' +
+    '<span class="panel-what" id="vw' + i + '"></span></div>';
+
+  for (const c of CTLS){
+    if (c.s){
+      html += '<div class="sub">' + c.s + '</div>';
+      if (c.seg) html += '<div class="seg segrow" id="' + c.seg + i + '">' + SEGS[c.seg] + '</div>';
+      if (c.seg === 'arch') html += '<div class="arch-note" id="an' + i + '"></div>';
+      // The four voices are identical, so the help notes live in voice 1 only.
+      // Repeating them four times would be six blocks of text become twenty-four.
+      if (i === 0 && c.help) html += '<div class="help" data-help="' + c.help + '"></div>';
+      continue;
+    }
+    html +=
+      '<div class="ctl" id="c-' + i + '-' + c.n + '" data-key="' + i + ':' + c.n + '">' +
+        '<div class="ctl-head"><span>' + c.t + '</span>' +
+          '<span class="cc" id="cc-' + i + '-' + c.n + '"></span>' +
+          '<span class="v" id="cv-' + i + '-' + c.n + '"></span></div>' +
+        '<input type="range" id="ci-' + i + '-' + c.n + '" min="0" max="1" step="0.001" aria-label="' + c.t + '">' +
+        '<span class="hwmark" id="hw-' + i + '-' + c.n + '"></span>' +
+      '</div>';
+  }
+  sec.innerHTML = html;
+  document.getElementById('rack').appendChild(sec);
+
+  for (const c of CTLS){
+    if (c.s) continue;
+    const key = i + ':' + c.n;
+    const inp = document.getElementById('ci-' + i + '-' + c.n);
+    REG[key] = {
+      i:i, c:c, inp:inp,
+      badge:document.getElementById('cc-' + i + '-' + c.n),
+      mark:document.getElementById('hw-' + i + '-' + c.n),
+      box:document.getElementById('c-' + i + '-' + c.n),
+      label:'Voice ' + (i + 1) + ' ' + c.t
+    };
+    inp.value = toNorm(c, v.p[c.n]);
+    inp.addEventListener('input', () => {
+      // dragging by hand desyncs the hardware, so it has to pick up again
+      if (paramToCC[key] !== undefined && pickedUp[key]){
+        pickedUp[key] = false;
+        refreshBadges();
+      }
+      applyNorm(key, +inp.value, true);
+    });
+    paintCtl(i, c);
+  }
+
+  document.querySelectorAll('#rack .ctl[data-key]').forEach(box => {
+    if (box._armWired) return;
+    box._armWired = true;
+    box.addEventListener('click', () => { if (midiLearn) armControl(box.dataset.key); });
+  });
+
+  wireSeg('arch' + i, () => v.arch, k => { v.arch = k; sendP(i, 'arch', k); paintVoice(i); });
+  wireSeg('mode' + i, () => v.mode, k => { v.mode = k; pushTimes(i); paintVoice(i); }, true);
+  wireSeg('ft' + i, () => v.ftype, k => { v.ftype = k; sendP(i, 'ftype', k); });
+  paintVoice(i);
+}
+
+function wireSeg(id, get, set, useMod){
+  const box = document.getElementById(id);
+  const btns = box.querySelectorAll('button');
+  function paint(){
+    btns.forEach(b => {
+      const on = +b.dataset.v === get();
+      b.classList.toggle(useMod ? 'on-mod' : 'on', on);
+    });
+  }
+  btns.forEach(b => b.addEventListener('click', e => { set(+b.dataset.v); paint(); e.currentTarget.blur(); }));
+  paint();
+  box._paint = paint;
+}
+
+function paintCtl(i, c){
+  const v = V[i];
+  let val = v.p[c.n];
+  // times are shown as the engine will hear them, mode scaling included
+  if (c.n === 'a' || c.n === 'd' || c.n === 'bendD') val *= MODE_SCALE[v.mode];
+  document.getElementById('cv-' + i + '-' + c.n).textContent = c.fmt(val);
+}
+
+function paintVoice(i){
+  const v = V[i];
+  document.getElementById('vw' + i).textContent = ARCH[v.arch].name;
+  const an = document.getElementById('an' + i);
+  an.textContent = T('arch')[v.arch];
+  an.setAttribute('lang', lang);
+  an.setAttribute('dir', isRTL() ? 'rtl' : 'ltr');
+  for (const c of CTLS){
+    if (c.s) continue;
+    const box = document.getElementById('c-' + i + '-' + c.n);
+    const dead = c.arch && c.arch.indexOf(v.arch) < 0;
+    box.classList.toggle('off', !!dead);
+    paintCtl(i, c);
+  }
+}
+
+for (let i = 0; i < 4; i++) buildVoice(i);
+
+/* ---------- pads ---------- */
+(function buildPads(){
+  const host = document.getElementById('pads');
+  const keys = ['A','S','D','F'];
+  host.innerHTML = [0,1,2,3].map(i =>
+    '<div class="pad" data-i="' + i + '"><b>' + (i + 1) + '</b><span>' + keys[i] + '</span></div>').join('');
+
+  // one entry per finger, keyed on pointerId — a single-pointer handler let a
+  // second touch steal the first one's pad, which reads as dropped hits
+  const touches = new Map();
+  host.addEventListener('pointerdown', e => {
+    const el = e.target.closest('.pad'); if (!el) return;
+    e.preventDefault();
+    try { host.setPointerCapture(e.pointerId); } catch (_) {}
+    touches.set(e.pointerId, +el.dataset.i);
+    trig(+el.dataset.i);
+  });
+  const lift = e => {
+    if (!touches.has(e.pointerId)) return;
+    touches.delete(e.pointerId);
+    try { host.releasePointerCapture(e.pointerId); } catch (_) {}
+  };
+  host.addEventListener('pointerup', lift);
+  host.addEventListener('pointercancel', lift);
+})();
+
+function setPadLights(act){
+  // the engine tells us which voices are still ringing; useful for hearing
+  // whether a long decay is actually as long as the label claims
+  document.querySelectorAll('.pad').forEach(p => {
+    const i = +p.dataset.i;
+    if (!act[i]) p.classList.remove('ring'); else p.classList.add('ring');
+  });
+}
+
+const KEYMAP = { a:0, s:1, d:2, f:3 };
+document.addEventListener('keydown', e => {
+  if (e.metaKey || e.ctrlKey || e.altKey || e.repeat) return;
+  const tag = document.activeElement && document.activeElement.tagName;
+  if (tag === 'INPUT' || tag === 'SELECT') return;
+  const i = KEYMAP[e.key.toLowerCase()];
+  if (i === undefined) return;
+  e.preventDefault();
+  trig(i);
+});
+
+/* ============================================================
+   MIDI LEARN
+   Keys are 'voiceIndex:paramName', plus 'master'. Ported from 4LS, including
+   soft takeover: after a reload or a drag on screen the hardware is no longer
+   where the slider is, so it does nothing until you sweep it onto the current
+   value and pick it up. Otherwise a controller sitting in the wrong position
+   would yank a voice out of shape the moment it moved.
+   ============================================================ */
+
+function saveMap(){
+  try { localStorage.setItem(MAP_KEY, JSON.stringify(ccToParam)); } catch (e) {}
+}
+function loadMap(){
+  try {
+    const raw = localStorage.getItem(MAP_KEY);
+    if (!raw) return;
+    const obj = JSON.parse(raw);
+    for (const cc in obj){
+      const k = obj[cc];
+      if (REG[k]){ ccToParam[cc] = k; paramToCC[k] = +cc; }
+    }
+  } catch (e) {}
+}
+
+function normOf(key){
+  const r = REG[key];
+  return key === 'master' ? master : toNorm(r.c, V[r.i].p[r.c.n]);
+}
+
+/* one place that moves a control, whichever direction the change came from */
+function applyNorm(key, t, fromUI){
+  const r = REG[key];
+  t = Math.min(1, Math.max(0, t));
+  if (key === 'master'){
+    master = t;
+    if (!fromUI) r.inp.value = t;
+    document.getElementById('masterV').textContent = NUM(master);
+    if (node) node.port.postMessage({ t:'master', v:master });
+    return;
+  }
+  const v = V[r.i], c = r.c;
+  v.p[c.n] = fromNorm(c, t);
+  if (!fromUI) r.inp.value = t;
+  paintCtl(r.i, c);
+  if (c.n === 'a' || c.n === 'd' || c.n === 'bendD') pushTimes(r.i);
+  else sendP(r.i, c.n, v.p[c.n]);
+}
+
+function refreshBadges(){
+  for (const k in REG){
+    const r = REG[k];
+    const cc = paramToCC[k];
+    const waiting = cc !== undefined && !pickedUp[k] && hwPos[k] !== undefined;
+    r.badge.textContent = cc === undefined ? '' : 'CC' + cc;
+    r.badge.classList.toggle('waiting', waiting);
+    r.box.classList.toggle('armed', learnArmed === k);
+    if (waiting){
+      r.mark.style.display = 'block';
+      r.mark.style.left = (hwPos[k] * 100).toFixed(1) + '%';
+    } else r.mark.style.display = 'none';
+  }
+}
+
+function learnStatus(){
+  const el = document.getElementById('learnMsg');
+  if (!el) return;
+  const count = Object.keys(ccToParam).length;
+  const tally = count ? count + (count === 1 ? ' control mapped' : ' controls mapped') : 'nothing mapped yet';
+  if (!navigator.requestMIDIAccess) el.textContent = 'This browser has no Web MIDI. Try Chrome or Edge.';
+  else if (learnArmed) el.textContent = 'Waiting \u2014 move a knob or fader for ' + REG[learnArmed].label +
+      '. Click it again to unassign, or press Escape.';
+  else if (!midiSeen) el.textContent = 'No controller messages yet. Connect one, then click a control \u2014 ' + tally + '.';
+  else el.textContent = 'Click any control, then move a knob on your controller \u2014 ' + tally + '.';
+}
+
+function armControl(key){
+  if (learnArmed === key){          // clicking the armed control again unassigns it
+    const cc = paramToCC[key];
+    if (cc !== undefined){
+      delete ccToParam[cc]; delete paramToCC[key];
+      delete hwPos[key]; delete pickedUp[key];
+      saveMap();
+    }
+    learnArmed = null;
+  } else learnArmed = key;
+  refreshBadges(); learnStatus();
+}
+
+function bindCC(cc, key){
+  const old = ccToParam[cc];                     // one knob drives one control
+  if (old !== undefined) delete paramToCC[old];
+  const prev = paramToCC[key];
+  if (prev !== undefined) delete ccToParam[prev];
+  ccToParam[cc] = key; paramToCC[key] = cc;
+  // the knob that just did the assigning is already where it is, so it takes
+  // over immediately rather than making you hunt for the value
+  pickedUp[key] = true;
+  learnArmed = null;
+  saveMap(); refreshBadges(); learnStatus();
+}
+
+function clearAllCC(){
+  for (const k in ccToParam) delete ccToParam[k];
+  for (const k in paramToCC) delete paramToCC[k];
+  for (const k in hwPos) delete hwPos[k];
+  for (const k in pickedUp) delete pickedUp[k];
+  saveMap(); learnArmed = null;
+  refreshBadges(); learnStatus();
+}
+
+function setLearn(on){
+  midiLearn = on;
+  if (!on) learnArmed = null;
+  document.body.classList.toggle('learning', on);
+  const b = document.getElementById('learnBtn');
+  b.classList.toggle('on', on);
+  b.setAttribute('aria-pressed', String(on));
+  refreshBadges(); learnStatus();
+}
+
+function handleCC(cc, val){
+  midiSeen = true;
+  if (midiLearn && learnArmed){ bindCC(cc, learnArmed); return; }
+  const key = ccToParam[cc];
+  if (!key || !REG[key]){ if (midiLearn) learnStatus(); return; }
+
+  const t = val / 127;
+  const cur = normOf(key);
+  const prev = hwPos[key];
+
+  if (!pickedUp[key] && prev !== undefined){
+    // picked up once the knob reaches or crosses where the slider is sitting
+    if (Math.abs(t - cur) < 0.02 || (prev < cur && t >= cur) || (prev > cur && t <= cur)) pickedUp[key] = true;
+  }
+  hwPos[key] = t;
+
+  if (pickedUp[key]) applyNorm(key, t);
+  refreshBadges();
+  if (midiLearn) learnStatus();
+}
+
+document.getElementById('learnBtn').addEventListener('click', e => { setLearn(!midiLearn); e.currentTarget.blur(); });
+document.getElementById('learnDone').addEventListener('click', e => { setLearn(false); e.currentTarget.blur(); });
+document.getElementById('learnClear').addEventListener('click', e => { clearAllCC(); e.currentTarget.blur(); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && midiLearn){
+    if (learnArmed){ learnArmed = null; refreshBadges(); learnStatus(); }
+    else setLearn(false);
+  }
+});
+
+/* ---------- master ---------- */
+(function wireMaster(){
+  const inp = document.getElementById('master');
+  const lbl = document.getElementById('masterV');
+  inp.value = master;
+  lbl.textContent = NUM(master);
+  REG['master'] = {
+    i:-1, c:{ n:'master', t:'Master', min:0, max:1, fmt:NUM }, inp:inp,
+    badge:document.getElementById('ccMaster'),
+    mark:document.getElementById('hwMaster'),
+    box:document.getElementById('ctlMaster'),
+    label:'Master'
+  };
+  inp.addEventListener('input', () => {
+    if (paramToCC['master'] !== undefined && pickedUp['master']){
+      pickedUp['master'] = false;
+      refreshBadges();
+    }
+    applyNorm('master', +inp.value, true);
+  });
+  REG['master'].box.addEventListener('click', () => { if (midiLearn) armControl('master'); });
+})();
+
+document.getElementById('panicBtn').addEventListener('click', e => {
+  if (node) node.port.postMessage({ t:'panic' });
+  e.currentTarget.blur();
+});
+
+/* ---------- MIDI ---------- */
+(function initMidi(){
+  const label = document.getElementById('midiLabel');
+  if (!navigator.requestMIDIAccess){ label.textContent = 'MIDI: not supported'; return; }
+  // the four General MIDI drum notes first, then any other note falls through
+  // to a voice by order, so a pad controller of any layout still plays
+  const GM = { 36:0, 38:1, 42:2, 45:3 };
+  const seen = [];
+  navigator.requestMIDIAccess().then(access => {
+    function bind(){
+      const names = [];
+      access.inputs.forEach(inp => {
+        names.push(inp.name);
+        inp.onmidimessage = m => {
+          const [st, d1, d2] = m.data;
+          const cmd = st & 0xf0;
+          if (cmd === 0xb0){
+            if (d1 === 123 || d1 === 120){ if (node) node.port.postMessage({ t:'panic' }); return; }
+            handleCC(d1, d2);
+            return;
+          }
+          if (cmd !== 0x90 || d2 === 0) return;
+          let i = GM[d1];
+          if (i === undefined){
+            let k = seen.indexOf(d1);
+            if (k < 0){ seen.push(d1); k = seen.length - 1; }
+            i = k % 4;
+          }
+          trig(i);
+        };
+      });
+      label.textContent = names.length ? 'MIDI: ' + names[0] : 'MIDI: none';
+      learnStatus();
+    }
+    bind();
+    access.onstatechange = bind;
+  }).catch(() => { label.textContent = 'MIDI: blocked'; });
+})();
+
+/* ---------- scope ---------- */
+const scopeCv = document.getElementById('scope'), sg = scopeCv.getContext('2d');
+function frame(){
+  const w = scopeCv.width, h = scopeCv.height;
+  sg.fillStyle = '#0A1315'; sg.fillRect(0, 0, w, h);
+  sg.strokeStyle = 'rgba(63,207,160,0.16)'; sg.lineWidth = 1;
+  sg.beginPath(); sg.moveTo(0, h / 2 + 0.5); sg.lineTo(w, h / 2 + 0.5); sg.stroke();
+  if (scopeAn){
+    scopeAn.getFloatTimeDomainData(scopeData);
+    sg.beginPath();
+    for (let x = 0; x <= w; x++){
+      const v = scopeData[Math.floor(x / w * (scopeData.length - 1))];
+      const y = h / 2 - v * (h / 2 - 4) * 1.4;
+      if (x === 0) sg.moveTo(0, y); else sg.lineTo(x, y);
+    }
+    sg.strokeStyle = '#3FCF8E'; sg.lineWidth = 1.5; sg.stroke();
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+/* ============================================================
+   HELP AND LANGUAGE
+   ============================================================ */
+const esc = str => String(str)
+  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+function renderHelp(){
+  const rtl = isRTL();
+  document.querySelectorAll('[data-help]').forEach(box => {
+    const h = T('help.' + box.dataset.help);
+    if (!h) return;
+    box.innerHTML = '<div class="help-note" lang="' + lang + '"' + (rtl ? ' dir="rtl"' : '') + '>' +
+      '<b>' + esc(h.t) + '</b> ' + esc(h.b) +
+      (h.ex || []).map(x => '<span class="ex">' + esc(x) + '</span>').join('') +
+      '</div>';
+  });
+  const lbl = document.getElementById('helpLangLbl');
+  if (lbl) lbl.textContent = T('helpLang');
+  ['curtainA', 'curtainB'].forEach((id, k) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = T(k === 0 ? 'start.a' : 'start.b');
+    el.setAttribute('lang', lang);
+    el.setAttribute('dir', rtl ? 'rtl' : 'ltr');
+  });
+  const sb = document.getElementById('startBtn');
+  if (sb) sb.textContent = T('start.btn');
+}
+
+function setLang(id){
+  lang = I18N[id] ? id : 'en';
+  document.querySelectorAll('.langseg button').forEach(b =>
+    b.classList.toggle('on', b.dataset.lang === lang));
+  renderHelp();
+  for (let i = 0; i < 4; i++) paintVoice(i);
+  try { localStorage.setItem('adrum.lang', lang); } catch (e) {}
+}
+
+(function buildLangPickers(){
+  const html = LANGS.map(l =>
+    '<button data-lang="' + l.id + '" lang="' + l.id + '"' +
+    (l.rtl ? ' dir="rtl"' : '') + '>' + l.label + '</button>').join('');
+  ['langSeg', 'langSegStart'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = html;
+    el.querySelectorAll('button').forEach(b =>
+      b.addEventListener('click', e => { setLang(b.dataset.lang); e.currentTarget.blur(); }));
+  });
+  let saved = null;
+  try { saved = localStorage.getItem('adrum.lang'); } catch (e) {}
+  setLang(saved || 'en');
+})();
+
+const helpBtn = document.getElementById('helpBtn');
+helpBtn.addEventListener('click', () => {
+  const on = document.body.classList.toggle('helpon');
+  helpBtn.classList.toggle('on', on);
+  helpBtn.blur();
+});
+
+loadMap(); refreshBadges(); learnStatus();
+
+document.getElementById('startBtn').addEventListener('click', async () => {
+  const c = document.getElementById('curtain');
+  try { await startAudio(); c.remove(); }
+  catch (err){
+    c.querySelector('p').textContent =
+      'Audio could not start. The page is most likely being viewed from a preview frame or a file:// path, ' +
+      'which blocks the audio engine from loading. Put the file on a web server — GitHub Pages works — and open it there. ' +
+      'Details: ' + err.message;
+  }
+});
+</script>
+
+</body>
+</html>
