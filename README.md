@@ -10,7 +10,7 @@ One HTML file. No install, no build step, no account, no cost. Open the link and
 
 ## Why this exists
 
-A class learning electronic music needs more than one kind of player. [4LS](https://slowcities.github.io/4LS/) teaches pitch and timbre; this teaches rhythm and time. Together they let a group of students perform as an ensemble rather than taking turns at one instrument.
+A class learning electronic music needs more than one kind of player. [4LS](https://slowcities.github.io/4LS/) teaches pitch and timbre; this teaches rhythm and time; [16Max](https://slowcities.github.io/16max/) keeps the clock. Together they let a group of students perform as an ensemble rather than taking turns at one instrument.
 
 The name is the design. Every voice is an **A**ttack and a **D**ecay and nothing else — no sustain, because a struck drum does not hold. It sounds, and it dies away. Once that is on the panel, the rest of the instrument follows from it.
 
@@ -20,19 +20,17 @@ The central idea is that a drum kit is not a collection of different machines. A
 
 ---
 
-## Current state
+## What it is
 
-This is a working prototype, not a finished instrument. What is built:
+Complete and working. Four voices, each with:
 
-- The full audio engine — three switchable voice architectures, AD envelopes, per-voice filter and delay, pan and level
-- Pads, computer keyboard, and MIDI note input
-- MIDI learn with soft takeover, saved per machine
-- The help system in six languages
+- A switchable engine — Pitched decay, Noise, or Metal
+- An AD envelope with a Snappy/Slow range switch
+- One filter, low pass or high pass
+- Its own delay
+- Level and Pan
 
-What is not built yet:
-
-- The live signal flow diagram
-- Presets
+Played by pads, computer keyboard, or MIDI, with MIDI learn and soft takeover across every control, and the help system in six languages.
 
 Controls are sliders rather than the rotary knobs used in 4LS. This is a decision rather than a gap: a voice panel here has a dozen parameters and four of them stack on a phone screen, and sliders read at a glance in a column where knobs do not.
 
@@ -78,6 +76,8 @@ Assigned controls use **soft takeover**: after a reload or a drag on screen, the
 There are around fifty assignable controls and most hardware has sixteen knobs, so mapping everything is not the goal. Pick the handful a performance actually needs — usually Decay, Cutoff, and Level across the four voices — and leave the rest to the screen.
 
 There is no sequencer, and this is a decision rather than an omission. Every hit happens at the moment a student makes it, so the timing belongs to the player. It also means the instrument behaves identically alone and in a group — nothing has to be synchronized, because nothing is running on its own.
+
+Sequencing lives in [16Max](https://slowcities.github.io/16max/) instead, where it is the whole subject rather than a feature bolted onto something else. In a group, the usual arrangement is that one device runs 16Max into the PA and everyone else plays ADrum and 4LS by hand over it.
 
 ---
 
@@ -195,5 +195,7 @@ Released under CC BY 4.0. Use it in your classroom, your workshop, your program.
 ## Companion projects
 
 **[4LS](https://slowcities.github.io/4LS/)** — a subtractive synthesizer you can see through, built on the same principles.
+
+**[16Max](https://slowcities.github.io/16max/)** — a sixteen step sequencer with probability, ratchets and ties.
 
 **[Video Surfer](https://slowcities.github.io/video-surfer/)** — a browser-based experimental video synthesizer in the Rutt/Etra lineage.
