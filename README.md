@@ -30,7 +30,7 @@ Complete and working. Four voices, each with:
 - Its own delay
 - Level and Pan
 
-Played by pads, computer keyboard, or MIDI, with MIDI learn and soft takeover across every control, and the help system in six languages.
+Played by pads, computer keyboard, or MIDI, with MIDI learn across every slider and every pad, soft takeover on the sliders, and the help system in six languages.
 
 Controls are sliders rather than the rotary knobs used in 4LS. This is a decision rather than a gap: a voice panel here has a dozen parameters and four of them stack on a phone screen, and sliders read at a glance in a column where knobs do not.
 
@@ -66,10 +66,14 @@ Headphones recommended. Start with the volume moderate — resonance and delay f
 | Pads | Click or tap. Multi-touch works, so several pads at once are fine on a phone or tablet |
 | Computer keyboard | **A S D F** — one key per voice |
 | MIDI notes | Notes 36, 38, 42, 45 map to voices 1–4. Any other note falls through to a voice in the order it first arrives, so a controller of any layout still plays |
-| MIDI learn | Assign hardware knobs to any slider — see below |
+| MIDI learn | Assign hardware knobs to any slider, and hardware pads to the four voice pads — see below |
 | Silence | Stops everything and clears the delay lines |
 
-**MIDI learn:** click MIDI learn in the top right, click any slider on screen, then move the knob or fader you want on your controller. The assignment appears above the slider as a small CC number. Clicking an assigned slider a second time removes it; Clear all wipes every assignment; Escape backs out. Assignments are saved in the browser, so a rig set up once comes back the next time you open the page on that machine. The Master control can be assigned too.
+**MIDI learn:** click MIDI learn in the top right, click any slider or pad on screen, then move the knob or hit the pad you want on your controller. The assignment appears as a small badge — CC for a knob, N for a note. Clicking an assigned control a second time removes it; Clear all wipes every assignment; Escape backs out. Assignments are saved in the browser, so a rig set up once comes back the next time you open the page on that machine. The Master control can be assigned too.
+
+The four pads are assignable as well, and they are **momentary**: they fire on the press and ignore the release. A drum voice is a one-shot with no sustain, so there is nothing for a release to end and nothing a toggle could usefully latch. Sliders only accept a knob, since a note carries no position to read; pads accept either a note or a knob.
+
+Anything left unassigned still follows the General MIDI layout, so a controller works the moment it is plugged in and learning stays optional. A learned assignment always takes priority over that default.
 
 Assigned controls use **soft takeover**: after a reload or a drag on screen, the hardware knob is no longer where the slider is, so it does nothing until you sweep it onto the current value and pick it up. While it is waiting, a small marker on the slider track shows where the hardware is sitting, so you know which way to turn. This means a controller sitting in the wrong position never yanks a voice out of shape the moment it moves.
 
