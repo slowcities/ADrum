@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>ADrum — Percussion Synth</title>
+<title>ADrum — four percussion voices</title>
 <style>
 :root{
   --paper:#E4E8E3;
@@ -85,6 +85,15 @@ body{
 }
 .pad b{font-size:22px; font-weight:600; letter-spacing:.04em; color:var(--ink);}
 .pad.hit{background:var(--live); border-color:var(--live);}
+/* a mapped pad shows its source in the corner, like the sliders do */
+.pad[data-cc]::after{
+  content:attr(data-cc); position:absolute; top:3px; left:4px;
+  font-size:7px; letter-spacing:0; color:var(--mod); text-transform:none;
+}
+.pad{position:relative;}
+.pad.armed{outline:2px solid var(--mod); outline-offset:-2px; background:var(--mod-soft);}
+body.learning .pad{outline:1px dashed var(--rule); outline-offset:-2px;}
+body.learning .pad:hover{outline-color:var(--mod);}
 .pad.hit b, .pad.hit{color:#fff;}
 .padbar{display:flex; gap:8px; align-items:center; flex-wrap:wrap; padding-top:9px;}
 .tiny{font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-2);}
@@ -519,7 +528,7 @@ en:{
   help:{
     pads:{ t:'Four voices, played by hand.',
       b:'There is no sequencer. Every hit happens at the moment you make it, so the timing is yours. That is also why this works the same alone or in a group.',
-      ex:['Play the pads, the A S D F keys, or a MIDI controller. Any pad or note fires a voice.'] },
+      ex:['Play the pads, the A S D F keys, or a MIDI controller. Any pad or note fires a voice.','MIDI learn also covers the four pads. Click MIDI learn, click a pad, then hit the pad or key you want on your controller. Pads are momentary: they fire on the press and ignore the release, because a drum voice is a one-shot with nothing for a release to end.'] },
     osc:{ t:'The engine is where the sound is born.',
       b:'Any voice can run any of the three engines. The same engine at different settings becomes a different drum — a kick and a tom are not two things, they are one engine with two Decay times.',
       ex:['Try: set two voices to the same engine and change nothing but Decay.'] },
@@ -552,7 +561,7 @@ es:{
   help:{
     pads:{ t:'Cuatro voces, tocadas a mano.',
       b:'No hay secuenciador. Cada golpe ocurre en el momento en que tú lo das, así que el tiempo es tuyo. Por eso mismo esto funciona igual en solitario que en grupo.',
-      ex:['Toca los pads, las teclas A S D F o un controlador MIDI. Cualquier pad o nota dispara una voz.'] },
+      ex:['Toca los pads, las teclas A S D F o un controlador MIDI. Cualquier pad o nota dispara una voz.','MIDI learn tambi\u00e9n incluye los cuatro pads. Activa MIDI learn, haz clic en un pad y golpea el pad o la tecla que quieras en tu controlador. Los pads son moment\u00e1neos: suenan al pulsar e ignoran el soltar, porque una voz de percusi\u00f3n es un disparo \u00fanico y no hay nada que soltar termine.'] },
     osc:{ t:'El motor es donde nace el sonido.',
       b:'Cualquier voz puede usar cualquiera de los tres motores. El mismo motor con otros ajustes se convierte en otro tambor: un bombo y un tom no son dos cosas distintas, son un motor con dos tiempos de Decay.',
       ex:['Prueba: pon dos voces en el mismo motor y cambia únicamente el Decay.'] },
@@ -585,7 +594,7 @@ ko:{
   help:{
     pads:{ t:'손으로 연주하는 네 개의 보이스.',
       b:'시퀀서는 없습니다. 모든 타격은 당신이 치는 그 순간에 일어나므로 박자는 당신의 것입니다. 그래서 혼자 연주할 때나 여럿이 함께할 때나 똑같이 동작합니다.',
-      ex:['패드, A S D F 키, 또는 MIDI 컨트롤러로 연주하세요. 어떤 패드나 음이든 보이스를 울립니다.'] },
+      ex:['패드, A S D F 키, 또는 MIDI 컨트롤러로 연주하세요. 어떤 패드나 음이든 보이스를 울립니다.','MIDI learn\uc740 \ub124 \uac1c\uc758 \ud328\ub4dc\uc5d0\ub3c4 \uc801\uc6a9\ub429\ub2c8\ub2e4. MIDI learn\uc744 \ucf1c\uace0 \ud328\ub4dc\ub97c \ud074\ub9ad\ud55c \ub2e4\uc74c, \ucee8\ud2b8\ub864\ub7ec\uc5d0\uc11c \uc6d0\ud558\ub294 \ud328\ub4dc\ub098 \uac74\ubc18\uc744 \uce58\uc138\uc694. \ud328\ub4dc\ub294 \ub204\ub97c \ub54c\ub9cc \uc18c\ub9ac\uac00 \ub098\uace0 \ub5bc\ub294 \uac83\uc740 \ubb34\uc2dc\ud569\ub2c8\ub2e4. \ud0c0\uc545\uae30 \uc18c\ub9ac\ub294 \ud55c \ubc88 \uc6b8\ub9ac\uace0 \ub05d\ub098\ubbc0\ub85c \ub5bc\uc11c \ub05d\ub0bc \uac83\uc774 \uc5c6\uae30 \ub54c\ubb38\uc785\ub2c8\ub2e4.'] },
     osc:{ t:'엔진은 소리가 태어나는 곳입니다.',
       b:'어느 보이스든 세 가지 엔진 중 무엇이든 쓸 수 있습니다. 같은 엔진도 설정이 달라지면 다른 북이 됩니다. 킥과 톰은 서로 다른 두 가지가 아니라, Decay 값이 다른 하나의 엔진입니다.',
       ex:['해보기: 두 보이스를 같은 엔진으로 두고 Decay만 다르게 해 보세요.'] },
@@ -618,7 +627,7 @@ ar:{
   help:{
     pads:{ t:'أربعة أصوات، تُعزف باليد.',
       b:'لا يوجد مُتابِع خطوات. كل ضربة تقع في اللحظة التي تصنعها فيها، فالإيقاع لك أنت. ولهذا السبب نفسه تعمل الآلة بالطريقة ذاتها منفردًا كنت أم ضمن مجموعة.',
-      ex:['اعزف على الـ pads، أو حروف A S D F، أو وحدة تحكم MIDI. أي pad أو نغمة تُطلق صوتًا.'] },
+      ex:['اعزف على الـ pads، أو حروف A S D F، أو وحدة تحكم MIDI. أي pad أو نغمة تُطلق صوتًا.','\u064a\u0634\u0645\u0644 MIDI learn \u0623\u064a\u0636\u064b\u0627 \u0627\u0644\u0640 pads \u0627\u0644\u0623\u0631\u0628\u0639\u0629. \u0634\u063a\u0651\u0644 MIDI learn\u060c \u062b\u0645 \u0627\u0646\u0642\u0631 \u0639\u0644\u0649 pad\u060c \u062b\u0645 \u0627\u0636\u0631\u0628 \u0627\u0644\u0640 pad \u0623\u0648 \u0627\u0644\u0645\u0641\u062a\u0627\u062d \u0627\u0644\u0630\u064a \u062a\u0631\u064a\u062f\u0647 \u0639\u0644\u0649 \u0648\u062d\u062f\u0629 \u0627\u0644\u062a\u062d\u0643\u0645. \u0648\u0627\u0644\u0640 pads \u0644\u062d\u0638\u064a\u0629: \u062a\u0646\u0637\u0644\u0642 \u0639\u0646\u062f \u0627\u0644\u0636\u063a\u0637 \u0648\u062a\u062a\u062c\u0627\u0647\u0644 \u0627\u0644\u0625\u0641\u0644\u0627\u062a\u060c \u0644\u0623\u0646 \u0635\u0648\u062a \u0627\u0644\u0625\u064a\u0642\u0627\u0639 \u0636\u0631\u0628\u0629 \u0648\u0627\u062d\u062f\u0629 \u0644\u064a\u0633 \u0641\u064a\u0647\u0627 \u0645\u0627 \u064a\u064f\u0646\u0647\u064a\u0647 \u0627\u0644\u0625\u0641\u0644\u0627\u062a.'] },
     osc:{ t:'المحرك هو حيث يولد الصوت.',
       b:'يمكن لأي صوت أن يعمل بأي من المحركات الثلاثة. والمحرك نفسه بإعدادات مختلفة يصير طبلة مختلفة: الطبلة الكبيرة وطبلة التوم ليستا شيئين، بل محرك واحد بزمني Decay مختلفين.',
       ex:['جرِّب: اضبط صوتين على المحرك نفسه ولا تغيّر سوى Decay.'] },
@@ -651,7 +660,7 @@ zh:{
   help:{
     pads:{ t:'四个声部，用手演奏。',
       b:'这里没有音序器。每一下都发生在你敲下去的那一刻，所以节奏由你掌握。也正因如此，一个人玩和一群人一起玩，它的表现完全一样。',
-      ex:['用 pad、A S D F 键，或者 MIDI 控制器演奏。任何一个 pad 或音符都会触发一个声部。'] },
+      ex:['用 pad、A S D F 键，或者 MIDI 控制器演奏。任何一个 pad 或音符都会触发一个声部。','MIDI learn \u540c\u6837\u9002\u7528\u4e8e\u56db\u4e2a pad\u3002\u6253\u5f00 MIDI learn\uff0c\u70b9\u4e00\u4e2a pad\uff0c\u7136\u540e\u5728\u63a7\u5236\u5668\u4e0a\u6572\u4f60\u60f3\u7528\u7684\u90a3\u4e2a pad \u6216\u952e\u3002pad \u662f\u77ac\u65f6\u7684\uff1a\u6309\u4e0b\u5c31\u54cd\uff0c\u677e\u5f00\u4e0d\u7ba1\uff0c\u56e0\u4e3a\u4e00\u4e2a\u6253\u51fb\u58f0\u90e8\u5c31\u662f\u4e00\u4e0b\uff0c\u6ca1\u6709\u4ec0\u4e48\u9700\u8981\u677e\u5f00\u6765\u7ed3\u675f\u3002'] },
     osc:{ t:'引擎是声音诞生的地方。',
       b:'每个声部都可以使用这三种引擎中的任意一种。同一个引擎换了参数就变成另一件鼓：底鼓和嗵鼓并不是两样东西，而是同一个引擎的两个 Decay 值。',
       ex:['试试：把两个声部设成同一个引擎，只改变 Decay。'] },
@@ -684,7 +693,7 @@ ja:{
   help:{
     pads:{ t:'4 つのボイスを、手で演奏する。',
       b:'シーケンサーはありません。すべての一打はあなたが叩いたその瞬間に鳴るので、タイミングはあなたのものです。だからこそ、ひとりで弾いても大勢で合わせても同じように働きます。',
-      ex:['パッド、A S D F キー、または MIDI コントローラーで演奏します。どのパッドでも、どの音でもボイスが鳴ります。'] },
+      ex:['パッド、A S D F キー、または MIDI コントローラーで演奏します。どのパッドでも、どの音でもボイスが鳴ります。','MIDI learn \u306f 4 \u3064\u306e\u30d1\u30c3\u30c9\u306b\u3082\u4f7f\u3048\u307e\u3059\u3002MIDI learn \u3092\u30aa\u30f3\u306b\u3057\u3066\u30d1\u30c3\u30c9\u3092\u30af\u30ea\u30c3\u30af\u3057\u3001\u30b3\u30f3\u30c8\u30ed\u30fc\u30e9\u30fc\u5074\u3067\u4f7f\u3044\u305f\u3044\u30d1\u30c3\u30c9\u3084\u30ad\u30fc\u3092\u53e9\u3044\u3066\u304f\u3060\u3055\u3044\u3002\u30d1\u30c3\u30c9\u306f\u30e2\u30fc\u30e1\u30f3\u30bf\u30ea\u30fc\u3067\u3001\u62bc\u3057\u305f\u77ac\u9593\u306b\u9cf4\u308a\u3001\u96e2\u3057\u3066\u3082\u4f55\u3082\u8d77\u304d\u307e\u305b\u3093\u3002\u6253\u697d\u306e\u97f3\u306f\u4e00\u767a\u3067\u7d42\u308f\u308b\u306e\u3067\u3001\u96e2\u3057\u3066\u7d42\u308f\u3089\u305b\u308b\u3082\u306e\u304c\u306a\u3044\u304b\u3089\u3067\u3059\u3002'] },
     osc:{ t:'エンジンは音が生まれる場所です。',
       b:'どのボイスも 3 つのエンジンのどれにでもなれます。同じエンジンでも設定が変われば別の太鼓になります。キックとタムは 2 つの別物ではなく、Decay の値が違うだけの 1 つのエンジンです。',
       ex:['試してみる：2 つのボイスを同じエンジンにして、Decay だけを変えてみてください。'] },
@@ -875,9 +884,9 @@ const fromNorm = (c, t) => c.log ? c.min * Math.pow(c.max / c.min, t)
 /* MIDI learn state. Declared here because buildVoice registers into it, and
    the behaviour that uses it is defined further down. */
 const REG = {};
-const ccToParam = {}, paramToCC = {}, hwPos = {}, pickedUp = {};
+const srcToParam = {}, paramToSrc = {}, hwPos = {}, pickedUp = {};
 let midiLearn = false, learnArmed = null, midiSeen = false;
-const MAP_KEY = 'adrum.midimap.v1';
+const MAP_KEY = 'adrum.midimap.v2';
 
 function buildVoice(i){
   const v = V[i];
@@ -924,7 +933,7 @@ function buildVoice(i){
     inp.value = toNorm(c, v.p[c.n]);
     inp.addEventListener('input', () => {
       // dragging by hand desyncs the hardware, so it has to pick up again
-      if (paramToCC[key] !== undefined && pickedUp[key]){
+      if (paramToSrc[key] !== undefined && pickedUp[key]){
         pickedUp[key] = false;
         refreshBadges();
       }
@@ -998,9 +1007,12 @@ for (let i = 0; i < 4; i++) buildVoice(i);
   host.addEventListener('pointerdown', e => {
     const el = e.target.closest('.pad'); if (!el) return;
     e.preventDefault();
+    const i = +el.dataset.i;
+    // while learning, hitting a pad assigns it rather than playing it
+    if (midiLearn){ armControl('pad' + i); return; }
     try { host.setPointerCapture(e.pointerId); } catch (_) {}
-    touches.set(e.pointerId, +el.dataset.i);
-    trig(+el.dataset.i);
+    touches.set(e.pointerId, i);
+    trig(i);
   });
   const lift = e => {
     if (!touches.has(e.pointerId)) return;
@@ -1020,6 +1032,16 @@ for (let i = 0; i < 4; i++) buildVoice(i);
     if (e.touches.length > 1) e.preventDefault();
   }, { passive:false });
   host.addEventListener('touchmove', e => e.preventDefault(), { passive:false });
+
+  // the pads join the same registry the sliders use, as momentary triggers
+  for (let i = 0; i < 4; i++){
+    REG['pad' + i] = {
+      kind:'pad',
+      el:host.querySelector('.pad[data-i="' + i + '"]'),
+      label:'Voice ' + (i + 1) + ' pad',
+      press:() => trig(i)
+    };
+  }
 })();
 
 function setPadLights(act){
@@ -1044,24 +1066,32 @@ document.addEventListener('keydown', e => {
 
 /* ============================================================
    MIDI LEARN
-   Keys are 'voiceIndex:paramName', plus 'master'. Ported from 4LS, including
-   soft takeover: after a reload or a drag on screen the hardware is no longer
-   where the slider is, so it does nothing until you sweep it onto the current
-   value and pick it up. Otherwise a controller sitting in the wrong position
-   would yank a voice out of shape the moment it moved.
+   Keys are 'voiceIndex:paramName', plus 'master' and 'pad0'..'pad3'. Ported
+   from 4LS, including soft takeover: after a reload or a drag on screen the
+   hardware is no longer where the slider is, so it does nothing until you
+   sweep it onto the current value and pick it up. Otherwise a controller
+   sitting in the wrong position would yank a voice out of shape the moment
+   it moved.
+
+   Sources are strings rather than plain CC numbers, because drum controllers
+   send notes from their pads and knobs from their knobs. 'cc12' is control
+   change 12; 'n36' is note 36. Sliders only accept a CC, since a note has no
+   position to read; pads accept either.
    ============================================================ */
 
+const srcLabel = src => src[0] === 'n' ? 'N' + src.slice(1) : 'CC' + src.slice(2);
+
 function saveMap(){
-  try { localStorage.setItem(MAP_KEY, JSON.stringify(ccToParam)); } catch (e) {}
+  try { localStorage.setItem(MAP_KEY, JSON.stringify(srcToParam)); } catch (e) {}
 }
 function loadMap(){
   try {
     const raw = localStorage.getItem(MAP_KEY);
     if (!raw) return;
     const obj = JSON.parse(raw);
-    for (const cc in obj){
-      const k = obj[cc];
-      if (REG[k]){ ccToParam[cc] = k; paramToCC[k] = +cc; }
+    for (const src in obj){
+      const k = obj[src];
+      if (REG[k]){ srcToParam[src] = k; paramToSrc[k] = src; }
     }
   } catch (e) {}
 }
@@ -1093,9 +1123,15 @@ function applyNorm(key, t, fromUI){
 function refreshBadges(){
   for (const k in REG){
     const r = REG[k];
-    const cc = paramToCC[k];
-    const waiting = cc !== undefined && !pickedUp[k] && hwPos[k] !== undefined;
-    r.badge.textContent = cc === undefined ? '' : 'CC' + cc;
+    const src = paramToSrc[k];
+    if (r.kind === 'pad'){
+      if (src === undefined) r.el.removeAttribute('data-cc');
+      else r.el.setAttribute('data-cc', srcLabel(src));
+      r.el.classList.toggle('armed', learnArmed === k);
+      continue;
+    }
+    const waiting = src !== undefined && !pickedUp[k] && hwPos[k] !== undefined;
+    r.badge.textContent = src === undefined ? '' : srcLabel(src);
     r.badge.classList.toggle('waiting', waiting);
     r.box.classList.toggle('armed', learnArmed === k);
     if (waiting){
@@ -1108,20 +1144,20 @@ function refreshBadges(){
 function learnStatus(){
   const el = document.getElementById('learnMsg');
   if (!el) return;
-  const count = Object.keys(ccToParam).length;
+  const count = Object.keys(srcToParam).length;
   const tally = count ? count + (count === 1 ? ' control mapped' : ' controls mapped') : 'nothing mapped yet';
   if (!navigator.requestMIDIAccess) el.textContent = 'This browser has no Web MIDI. Try Chrome or Edge.';
-  else if (learnArmed) el.textContent = 'Waiting \u2014 move a knob or fader for ' + REG[learnArmed].label +
+  else if (learnArmed) el.textContent = 'Waiting \u2014 move a knob, or hit a pad, for ' + REG[learnArmed].label +
       '. Click it again to unassign, or press Escape.';
   else if (!midiSeen) el.textContent = 'No controller messages yet. Connect one, then click a control \u2014 ' + tally + '.';
-  else el.textContent = 'Click any control, then move a knob on your controller \u2014 ' + tally + '.';
+  else el.textContent = 'Click any control or pad, then move a knob or hit a pad on your controller \u2014 ' + tally + '.';
 }
 
 function armControl(key){
   if (learnArmed === key){          // clicking the armed control again unassigns it
-    const cc = paramToCC[key];
-    if (cc !== undefined){
-      delete ccToParam[cc]; delete paramToCC[key];
+    const src = paramToSrc[key];
+    if (src !== undefined){
+      delete srcToParam[src]; delete paramToSrc[key];
       delete hwPos[key]; delete pickedUp[key];
       saveMap();
     }
@@ -1130,12 +1166,12 @@ function armControl(key){
   refreshBadges(); learnStatus();
 }
 
-function bindCC(cc, key){
-  const old = ccToParam[cc];                     // one knob drives one control
-  if (old !== undefined) delete paramToCC[old];
-  const prev = paramToCC[key];
-  if (prev !== undefined) delete ccToParam[prev];
-  ccToParam[cc] = key; paramToCC[key] = cc;
+function bindSrc(src, key){
+  const old = srcToParam[src];                   // one control drives one thing
+  if (old !== undefined) delete paramToSrc[old];
+  const prev = paramToSrc[key];
+  if (prev !== undefined) delete srcToParam[prev];
+  srcToParam[src] = key; paramToSrc[key] = src;
   // the knob that just did the assigning is already where it is, so it takes
   // over immediately rather than making you hunt for the value
   pickedUp[key] = true;
@@ -1144,8 +1180,8 @@ function bindCC(cc, key){
 }
 
 function clearAllCC(){
-  for (const k in ccToParam) delete ccToParam[k];
-  for (const k in paramToCC) delete paramToCC[k];
+  for (const k in srcToParam) delete srcToParam[k];
+  for (const k in paramToSrc) delete paramToSrc[k];
   for (const k in hwPos) delete hwPos[k];
   for (const k in pickedUp) delete pickedUp[k];
   saveMap(); learnArmed = null;
@@ -1162,11 +1198,39 @@ function setLearn(on){
   refreshBadges(); learnStatus();
 }
 
-function handleCC(cc, val){
+/* remembers whether a mapped pad is currently down, so a controller that
+   streams the same value repeatedly cannot retrigger it */
+const padDown = {};
+
+/* One entry point for every incoming message. `src` is 'cc12' or 'n36'; a
+   note-off arrives with down = false. */
+function handleMidi(src, val, isNote, down){
   midiSeen = true;
-  if (midiLearn && learnArmed){ bindCC(cc, learnArmed); return; }
-  const key = ccToParam[cc];
+
+  if (midiLearn && learnArmed){
+    // a slider has no use for a note, since a note carries no position
+    if (isNote && REG[learnArmed].kind !== 'pad'){ learnStatus(); return; }
+    if (isNote && !down) return;                 // bind on the press, not the release
+    bindSrc(src, learnArmed);
+    return;
+  }
+
+  const key = srcToParam[src];
   if (!key || !REG[key]){ if (midiLearn) learnStatus(); return; }
+  const r = REG[key];
+
+  if (r.kind === 'pad'){
+    // Momentary: the pad fires on the press and does nothing on the release.
+    // A drum voice is a one-shot with no sustain, so there is nothing for a
+    // release to end and nothing a toggle could usefully latch.
+    const nowDown = isNote ? down : val >= 64;
+    if (nowDown === !!padDown[key]) return;
+    padDown[key] = nowDown;
+    if (nowDown) r.press();
+    return;
+  }
+
+  if (isNote) return;                            // sliders only follow a CC
 
   const t = val / 127;
   const cur = normOf(key);
@@ -1207,7 +1271,7 @@ document.addEventListener('keydown', e => {
     label:'Master'
   };
   inp.addEventListener('input', () => {
-    if (paramToCC['master'] !== undefined && pickedUp['master']){
+    if (paramToSrc['master'] !== undefined && pickedUp['master']){
       pickedUp['master'] = false;
       refreshBadges();
     }
@@ -1237,12 +1301,26 @@ document.getElementById('panicBtn').addEventListener('click', e => {
         inp.onmidimessage = m => {
           const [st, d1, d2] = m.data;
           const cmd = st & 0xf0;
+
           if (cmd === 0xb0){
             if (d1 === 123 || d1 === 120){ if (node) node.port.postMessage({ t:'panic' }); return; }
-            handleCC(d1, d2);
+            handleMidi('cc' + d1, d2, false, d2 >= 64);
             return;
           }
-          if (cmd !== 0x90 || d2 === 0) return;
+
+          const isOn = cmd === 0x90 && d2 > 0;
+          const isOff = cmd === 0x80 || (cmd === 0x90 && d2 === 0);
+          if (!isOn && !isOff) return;
+
+          const src = 'n' + d1;
+          // A learned assignment always wins. Anything unassigned still falls
+          // through to the General MIDI layout, so a controller works the
+          // moment it is plugged in and learning stays optional.
+          if (srcToParam[src] !== undefined || (midiLearn && learnArmed)){
+            handleMidi(src, d2, true, isOn);
+            return;
+          }
+          if (!isOn) return;
           let i = GM[d1];
           if (i === undefined){
             let k = seen.indexOf(d1);
