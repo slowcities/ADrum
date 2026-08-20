@@ -4,7 +4,7 @@ Four percussion voices with AD envelopes. A drum synthesizer that runs in a brow
 
 One HTML file. No install, no build step, no account, no cost. Open the link and it makes sound.
 
-**▶ Play it here** (https://slowcities.github.io/ADrum/)
+[**▶ Play it here**](https://slowcities.github.io/ADrum/)
 
 ---
 
