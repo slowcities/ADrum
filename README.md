@@ -4,7 +4,7 @@ Four percussion voices with AD envelopes. A drum synthesizer that runs in a brow
 
 One HTML file. No install, no build step, no account, no cost. Open the link and it makes sound.
 
-**▶ Play it here**
+**▶ Play it here** (https://slowcities.github.io/ADrum/)
 
 ---
 
@@ -71,7 +71,9 @@ Headphones recommended. Start with the volume moderate — resonance and delay f
 
 **MIDI learn:** click MIDI learn in the top right, click any slider or pad on screen, then move the knob or hit the pad you want on your controller. The assignment appears as a small badge — CC for a knob, N for a note. Clicking an assigned control a second time removes it; Clear all wipes every assignment; Escape backs out. Assignments are saved in the browser, so a rig set up once comes back the next time you open the page on that machine. The Master control can be assigned too.
 
-The four pads are assignable as well, and they are **momentary**: they fire on the press and ignore the release. A drum voice is a one-shot with no sustain, so there is nothing for a release to end and nothing a toggle could usefully latch. Sliders only accept a knob, since a note carries no position to read; pads accept either a note or a knob.
+The four pads are assignable as well, and they are **momentary**: they fire on the press and ignore the release. A drum voice is a one-shot with no sustain, so there is nothing for a release to end and nothing a toggle could usefully latch.
+
+Sliders take a knob and pads take a note, and neither will accept the other. A note carries no position for a slider to follow, and a knob has no press for a pad to answer, so pairing them the wrong way round would produce a mapping that could never behave sensibly.
 
 Anything left unassigned still follows the General MIDI layout, so a controller works the moment it is plugged in and learning stays optional. A learned assignment always takes priority over that default.
 
@@ -94,6 +96,8 @@ Four identical voice panels. Each one is a complete little drum machine: an engi
 Where the sound is born. Three engines, and any voice can run any of them:
 
 **Pitched decay** — one sine, pulled down by a fast pitch envelope. A long Decay gives a kick, a short one gives a tom, an extreme Bend gives a zap. Tune sets the pitch it lands on, Bend how far above it starts, Bend fall how quickly it arrives.
+
+Tune reads in hertz with the note it lands on beside it — `55 Hz (A1)`. Most settings fall between two notes rather than on one, and the gap is shown in cents rather than rounded away, because a student reading `A♯1` at 58 Hz would otherwise conclude that 58 Hz simply is A♯1. A hundred cents is a semitone. The four voices ship tuned to notes, with the kick at A1 and the tom at D3, an octave and a fifth apart.
 
 **Noise** — no pitch at all. Colour tilts it from a dark rumble to full white before the filter shapes it. The level is compensated as Colour moves, so turning it down gets darker rather than merely quieter.
 
@@ -125,6 +129,26 @@ Pan is equal-power, so a voice swept across the field holds a steady loudness in
 
 ---
 
+## Presets
+
+Six kits, each demonstrating one idea, all built from the same panel.
+
+**Standard kit** — a kick, a snare, a hat and a tom, each on a different engine. The panel as it opens.
+
+**Tuned kit** — all four voices pitched, on an A minor triad spanning two octaves, with the bend pulled right back and the decays long enough to actually hear a pitch. Panned apart so the chord occupies a space rather than a point.
+
+**All noise** — the one to load first. Four voices on the same engine, differing only in Colour, filter and Decay, and yet a kick, a snare, a hat and a wash come out of it. This is the clearest demonstration the instrument has.
+
+**Boom** — slow mode, low tunings, decays running to three and a half seconds. Percussion long enough to become drone.
+
+**Bells** — all four on the metallic cluster, high passed and left to ring for a second or more. The same engine that makes a hat when it is cut short.
+
+**Dub delay** — the kick stays dry so the pulse holds, and everything else is thrown into its own delay at a different rate. That difference is what makes four voices sound like a room rather than a line.
+
+Kits are not saved between sessions. This is deliberate: it keeps the file self-contained and keeps students building rather than recalling.
+
+---
+
 ## Teaching with it
 
 Some sequences that work:
@@ -134,6 +158,12 @@ Some sequences that work:
 **A snare and a floor tom are also the same thing.** Take the Noise voice, switch the filter to Low pass, drop the Cutoff, lengthen the Decay. The snare becomes a floor tom without changing engines.
 
 **Why a hi-hat has no pitch.** Play the Metal engine, then try to sing along with it. Students cannot, and the reason is on the panel: six oscillators at ratios that never line up, so the ear has no fundamental to lock onto.
+
+**Drums have pitch too.** Set two voices to Pitched decay and tune them by the note readout rather than by ear — a kick at A1 and a tom at E2 is a fifth. Then detune one by fifty cents and listen to the pair sour. Percussion is not exempt from tuning, and the cents readout is where that becomes obvious.
+
+**One engine, four drums.** Load All noise and look at the four panels. Every voice is on the same engine. The only differences are Colour, the filter and the Decay, and those three controls are the whole distance between a kick and a hi-hat.
+
+**When does a drum stop being a drum?** Load Boom and lengthen the decays further. At some point the class stops calling it percussion and starts calling it a drone, and there is no line in the code where that happens — only a number getting larger.
 
 **What an envelope is.** Attack all the way down and Decay short is a click. Attack up is a swell. Same engine, same filter — the envelope alone is the difference between a drum and a pad.
 
